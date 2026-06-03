@@ -12,7 +12,7 @@ function App() {
     <div>Zaalima web development first project AI-Powered Applicant Tracking System (ATS)</div>
     </>
   )
-}git 
+}
 
 export default App
 //import RecruiterDashboard from './components/Adim/recruiterdashboard';
