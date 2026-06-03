@@ -15,3 +15,14 @@ function App() {
 }git 
 
 export default App
+//import RecruiterDashboard from './components/Adim/recruiterdashboard';
+
+//function App() {
+ // return (
+    //<div>
+    //  <RecruiterDashboard />
+   // </div>
+  //);
+//}
+
+//export default App;
