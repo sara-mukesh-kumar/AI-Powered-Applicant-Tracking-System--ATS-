@@ -28,6 +28,10 @@ function ApplicantDashboard() {
           <h2>Profile status</h2>
           <p>Update your resume and contact information.</p>
         </div>
+        <div className="card">
+          <h2>Contact us</h2>
+          <p>Have questions? Get in touch with our support team.</p>
+        </div>
       </div>
     </section>
   )
