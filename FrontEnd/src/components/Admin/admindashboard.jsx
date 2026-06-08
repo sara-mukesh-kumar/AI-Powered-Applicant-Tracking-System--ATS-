@@ -1,6 +1,9 @@
 const admindashboard = () => {
   return (
-    <div>admindashboard</div>
+    <>
+    
+    <div></div>
+    </>
   )
 }
 

@@ -1,19 +1,20 @@
+
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 import ApplicantDashboard from './components/Applicant/ApplicantDashboard'
-import AdminDashboard from './components/Admin/admindashboard'
+import React from "react";
+
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
+
     <>
       {/* <h2>Zaalima web development first project AI-Powered Applicant Tracking System (ATS)</h2> */}
       <ApplicantDashboard />
-      <AdminDashboard />
+  
     </>
 
   )
@@ -34,5 +35,6 @@ export default App
 //}
 
 //export default App;
+
 
 
