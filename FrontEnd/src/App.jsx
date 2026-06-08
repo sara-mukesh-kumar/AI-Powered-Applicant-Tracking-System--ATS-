@@ -1,30 +1,10 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React from "react";
+import AdminLayout from "./components/Admin/AdminLayout";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-    <div>Zaalima web development first project AI-Powered Applicant Tracking System (ATS)</div>
-    </>
-  )
+    <AdminLayout />
+  );
 }
 
-export default App
-//import RecruiterDashboard from './components/Adim/recruiterdashboard';
-
-//function App() {
- // return (
-    //<div>
-    //  <RecruiterDashboard />
-   // </div>
-  //);
-//}
-
-//export default App;
-
-
+export default App;
