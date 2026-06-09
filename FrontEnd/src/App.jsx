@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import './App.css'
-import ApplicantDashboard from './components/Applicant/ApplicantDashboard'
+import ApplicantDashboard from './components/Applicant/temp'
 // import JobListings from './components/Applicant/JobListings'
 import React from "react";
 import AdminLayout from "./components/Admin/AdminLayout";
