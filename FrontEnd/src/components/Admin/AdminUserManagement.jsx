@@ -107,8 +107,8 @@ export default function UserManagement() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-2xl bg-white shadow">
+        <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
               <th className="px-6 py-4 text-left">Name</th>

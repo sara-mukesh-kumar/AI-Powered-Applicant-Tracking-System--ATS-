@@ -17,7 +17,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="h-screen w-64 bg-gray-900 text-white flex flex-col fixed left-0 top-0">
+    <div className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-y-auto bg-gray-900 text-white">
 
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-700">

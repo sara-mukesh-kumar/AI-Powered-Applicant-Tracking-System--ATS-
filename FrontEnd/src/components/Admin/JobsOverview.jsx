@@ -68,7 +68,7 @@ export default function JobsOverview() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div className="bg-white rounded-2xl shadow p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
             {jobs.filter((j) => j.status === "active").length}
@@ -114,8 +114,8 @@ export default function JobsOverview() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-2xl bg-white shadow">
+        <table className="min-w-[980px] w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
               <th className="px-6 py-4 text-left">Job Title</th>
