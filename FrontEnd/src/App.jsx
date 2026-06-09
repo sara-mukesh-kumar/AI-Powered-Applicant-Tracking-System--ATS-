@@ -20,9 +20,8 @@ import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonito
 // Recruiter
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
 import RecruiterLayout from "./components/Recruiter/RecruiterLayout";
-import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
 import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
-import RecruiterSidebar from "./components/Recruiter/RecruiterSidebar";
+
 
 function App() {
   return (
@@ -55,8 +54,7 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<RecruiterDashboard />} />
           <Route path="profile" element={<RecruiterProfile />} />
-          <Route path="navbar" element={<RecruiterNavbar />} />
-          <Route path="sidebar" element={<RecruiterSidebar />} />
+          
         </Route>
 
       </Routes>

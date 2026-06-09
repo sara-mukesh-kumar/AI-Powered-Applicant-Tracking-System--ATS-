@@ -1,9 +1,21 @@
-import React from 'react'
+import React from "react";
+import RecruiterNavbar from "./RecruiterNavbar";
+import RecruiterSidebar from "./RecruiterSidebar";
 
-const RecruiterLayout = () => {
+const RecruiterLayout = ({ children }) => {
   return (
-    <div>RecruiterLayout</div>
-  )
-}
+    <div className="flex">
+      <RecruiterSidebar />
 
-export default RecruiterLayout
+      <div className="flex-1">
+        <RecruiterNavbar />
+
+        <main className="p-6 bg-gray-100 min-h-screen">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default RecruiterLayout;
