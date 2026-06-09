@@ -16,7 +16,7 @@ const statusBadge = (status) => {
   return "bg-gray-100 text-gray-700";
 };
 
-export default function JobsOverview() {
+export default function AdminJobsOverview() {
   const [jobs, setJobs] = useState(fakeJobs);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");

@@ -1,5 +1,5 @@
 import React from "react";
-import "./RecruiterDashboard.css";
+// import "./RecruiterDashboard.css";
 
 function RecruiterDashboard() {
   const stats = [

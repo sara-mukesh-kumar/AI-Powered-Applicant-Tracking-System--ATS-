@@ -1,5 +1,5 @@
 import React from "react";
-import "./RecruiterNavbar.css";
+// import "./RecruiterNavbar.css";
 
 function RecruiterNavbar() {
   return (
