@@ -2,7 +2,7 @@ import React from "react";
 import { useState } from 'react'
 import './App.css'
 import ApplicantDashboard from './components/Applicant/ApplicantDashboard'
-// import JobListings from './components/Applicant/JobListings'
+import JobListings from './components/Applicant/JobListings'
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AdminLogin from "./components/Admin/AdminLogin";
 import AdminLayout from "./components/Admin/AdminLayout";
@@ -172,15 +172,12 @@ function App() {
           </Route>
 
           {/* Applicant routes */}
-          <Route path="/applicant" element={<ApplicantDashboard />} >
-           <Route index element={<Navigate to="dashboard" replace />} />
-           <Route path="dashboard" element={<ApplicantDashboard />}/>
-           <Route path="profile" element={<ApplicantProfile />}/>
-           {/* <Route path="tracker" element={<ApplicantionTracker />}/> */}
-           <Route path="jobDetails" element={<JobDetails />}/>
-           {/* <Route path="joblisting" element={<Joblistings />}/> */}
-           <Route path="resumeupload" element={<ResumeUpload />}/>
-          </Route>
+    
+              <Route path="/applicant/dashboard" element={<ApplicantDashboard />} />
+              <Route path="/applicant/profile" element={<ApplicantProfile />} />
+              <Route path="/applicant/jobDetails" element={<JobDetails />} />
+              <Route path="/applicant/joblisting" element={<JobListings />} />
+              <Route path="/applicant/resumeupload" element={<ResumeUpload />} />
 
           {/* Recruiter routes */}
           {/* <Route path="/dashboard" element={< RecruiterDashboard/>}> */}
