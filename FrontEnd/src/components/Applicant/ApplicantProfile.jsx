@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ApplicantNavbar from "./ApplicantNavbar";
+// import ApplicantNavbar from "./ApplicantNavbar";
 
 const skills = ["React", "JavaScript", "Node.js", "MongoDB", "Tailwind CSS"];
 

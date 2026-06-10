@@ -13,7 +13,6 @@ import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonito
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
 import RecruiterLayout from "./components/Recruiter/RecruiterLayout";
 import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
-
 import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
 import RecruiterSidebar from "./components/Recruiter/RecruiterSidebar";
 import ApplicantProfile from "./components/Applicant/ApplicantProfile";
@@ -194,10 +193,7 @@ function App() {
 
         </Routes>
       </BrowserRouter>
-      {/* <AdminLayout />
-    
-    <ApplicantDashboard />
-    <JobListings /> */}
+      
 
     </>
   );

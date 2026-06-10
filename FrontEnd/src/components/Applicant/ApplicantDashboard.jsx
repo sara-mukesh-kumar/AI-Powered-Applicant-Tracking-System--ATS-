@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import ApplicantNavbar from "./ApplicantNavbar";
+// import ApplicantNavbar from "./ApplicantNavbar";
 
 const stats = [
   { label: "Applied Jobs", value: "12", helper: "4 active this week", color: "text-blue-600", background: "bg-blue-50" },

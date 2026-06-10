@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ApplicantApplicationModal from "./ApplicantApplyJob";
-import ApplicantNavbar from "./ApplicantNavbar";
+// import ApplicantNavbar from "./ApplicantNavbar";
 
 const job = {
   title: "MERN Stack Developer",
