@@ -115,12 +115,6 @@ function App() {
 
         </Routes>
       </BrowserRouter>
-      {/* <AdminLayout />
-    
-    <ApplicantDashboard />
-    <JobListings /> */}
-
-    </>
   );
 }
 
