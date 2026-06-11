@@ -1,199 +1,124 @@
 import React from "react";
-import { useState } from 'react'
-import './App.css'
-import ApplicantDashboard from './components/Applicant/ApplicantDashboard'
-import JobListings from './components/Applicant/JobListings'
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import "./App.css";
+
+// Auth Components
+import Login from "./components/Auth/Login";
+import Register from "./components/Auth/Registration";
+
+// Admin Components
 import AdminLogin from "./components/Admin/AdminLogin";
 import AdminLayout from "./components/Admin/AdminLayout";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminUserManagement from "./components/Admin/AdminUserManagement";
 import AdminJobsOverview from "./components/Admin/AdminJobsOverview";
 import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonitor";
+
+// Recruiter Components
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
 import RecruiterLayout from "./components/Recruiter/RecruiterLayout";
 import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
+
 import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
-import RecruiterSidebar from "./components/Recruiter/RecruiterSidebar";
+// import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
+// import RecruiterSidebar from "./components/Recruiter/RecruiterSidebar";
+
+// Applicant Components
+// Note: You should ideally have an ApplicantLayout just like AdminLayout. 
+// Using ApplicantDashboard as a wrapper might break your UI if it doesn't have an <Outlet />
+import ApplicantDashboard from "./components/Applicant/ApplicantDashboard";
 import ApplicantProfile from "./components/Applicant/ApplicantProfile";
 import JobDetails from "./components/Applicant/JobDetails";
 import ResumeUpload from "./components/Applicant/ResumeUpload";
 
-// AI Integration
-import CandidateRanking from "./components/AI-integration-features/CandidateRanking";
-
-
-
-function AdminProtectedRoute({ children }) {
-  const user = JSON.parse(localStorage.getItem("user"));
+// ==========================================
+// ROLE-BASED PROTECTED ROUTE COMPONENT
+// ==========================================
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!token || !user || user.role !== "admin") {
-    return <Navigate to="/admin/login" replace />;
+  // 1. If not logged in, send to login page
+  if (!token || !user) {
+    return <Navigate to="/" replace />;
   }
+
+  // 2. If user's role is not in the allowed list, kick them out
+  if (!allowedRoles.includes(user.role)) {
+    // Redirect them to their proper dashboard
+    if (user.role === "admin") return <Navigate to="/admin/dashboard" replace />;
+    if (user.role === "recruiter") return <Navigate to="/recruiter/dashboard" replace />;
+    return <Navigate to="/applicant/dashboard" replace />;
+  }
+
+  // 3. Authorized! Render the layout.
   return children;
-}
+};
+
 
 function App() {
   return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route
-  path="/"
-  element={
-    <div className="min-h-screen bg-slate-50 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:40px_40px]">
-      
-      <div className="container mx-auto px-8 py-12">
-        
-        <h1 className="text-6xl font-bold text-slate-800 mb-4">
-          ATS Development Pages
-        </h1>
+        {/* ================= ADMIN ROUTES ================= */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="jobs" element={<AdminJobsOverview />} />
+          <Route path="applications" element={<AdminApplicationsMonitor />} />
+          <Route path="users" element={<AdminUserManagement />} />
+        </Route>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ================= RECRUITER ROUTES ================= */}
+        <Route 
+          path="/recruiter" 
+          element={
+            <ProtectedRoute allowedRoles={["recruiter"]}>
+              <RecruiterDashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<RecruiterDashboard />} />
+          <Route path="profile" element={<RecruiterProfile />} />
+        </Route>
 
-          {/* Admin */}
-          <a
-            href="/admin/dashboard"
-            className="group bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-          >
-            <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mb-5">
-              <span className="text-2xl">👨‍💼</span>
-            </div>
-
-            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-blue-600">
-              Admin
-            </h2>
-
-            <p className="mt-3 text-slate-500">
-              Manage users, jobs, and applications.
-            </p>
-          </a>
-
-          {/* Applicant */}
-          <a
-            href="/applicant/dashboard"
-            className="group bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-          >
-            <div className="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center mb-5">
-              <span className="text-2xl">👤</span>
-            </div>
-
-            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-green-600">
-              Applicant
-            </h2>
-
-            <p className="mt-3 text-slate-500">
-              View jobs, upload resumes and track applications.
-            </p>
-          </a>
-
-          {/* Recruiter */}
-          <a
-            href="/recruiter/dashboard"
-            className="group bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-          >
-            <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center mb-5">
-              <span className="text-2xl">📋</span>
-            </div>
-
-            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-purple-600">
-              Recruiter
-            </h2>
-
-            <p className="mt-3 text-slate-500">
-              Post jobs and manage candidate applications.
-            </p>
-          </a>
-
-          {/* AI Integration */}
-          <a
-            href="/candidate-ranking"
-            className="group bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-          >
-            <div className="w-14 h-14 rounded-xl bg-pink-100 flex items-center justify-center mb-5">
-              <span className="text-2xl">🤖</span>
-            </div>
-
-            <h2 className="text-2xl font-bold text-slate-800 group-hover:text-pink-600">
-              AI Integration
-            </h2>
-
-            <p className="mt-3 text-slate-500">
-              Candidate ranking and AI-powered recruitment tools.
-            </p>
-          </a>
-
-        </div>
-
-      </div>
-    </div>
-  }
-/>
-          {/* <Route path="/" element={
-            <div style={{ padding: "30px" }}>
-              <h1>ATS Development Pages</h1>
-
-              <h2><a href="/admin/dashboard">Admin</a></h2>
-              <br />
-
-              <h2><a href="/applicant/dashboard">Applicant</a></h2>
-
-              <a href="/applicant/profile"></a>
-              <a href="/applicant/jobDetails"></a>
-              <a href="/applicant/resumeupload"></a>
-
-              <br />
-
-              <h2><a href="/recruiter/dashboard">Recruiter</a></h2>
-              <a href="/recruiter/dashboard"></a>
-              <a href="/recruiter/profile"></a>
-              <a href="/recruiter/navbar"></a>
-              <a href="/recruiter/sidebar"></a>
-
-              <br />
-
-              <h2><a href="/candidate-ranking">AI Integration</a></h2>
-              <a href="/candidate-ranking"></a>
-            </div>
-          } /> */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-
-          {/* Protected Route temporarily hataya */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="jobs" element={<AdminJobsOverview />} />
-            <Route path="applications" element={<AdminApplicationsMonitor />} />
-            <Route path="users" element={<AdminUserManagement />} />
-
-          </Route>
-
-          {/* Applicant routes */}
-    
-              <Route path="/applicant/dashboard" element={<ApplicantDashboard />} />
-              <Route path="/applicant/profile" element={<ApplicantProfile />} />
-              <Route path="/applicant/jobDetails" element={<JobDetails />} />
-              <Route path="/applicant/joblisting" element={<JobListings />} />
-              <Route path="/applicant/resumeupload" element={<ResumeUpload />} />
-
-          {/* Recruiter routes */}
-          {/* <Route path="/dashboard" element={< RecruiterDashboard/>}> */}
-          <Route path="/recruiter" element={<RecruiterDashboard />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<RecruiterLayout />} />
-            <Route path="profile" element={<RecruiterProfile />} />
-            <Route path="navbar" element={<RecruiterNavbar />} />
-            <Route path="sidebar" element={<RecruiterSidebar />} />
-          </Route>
-
-          {/* AI-integration */}
-          <Route path="/candidate-ranking" element={<CandidateRanking />} />
+        {/* ================= APPLICANT ROUTES ================= */}
+        {/* Make sure your ApplicantDashboard component has an <Outlet /> inside it, 
+            otherwise the nested routes (profile, jobDetails) will not show up! */}
+        <Route 
+          path="/applicant" 
+          element={
+            <ProtectedRoute allowedRoles={["applicant"]}>
+              <ApplicantDashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<ApplicantDashboard />} />
+          <Route path="profile" element={<ApplicantProfile />} />
+          <Route path="jobDetails" element={<JobDetails />} />
+          <Route path="resumeupload" element={<ResumeUpload />} />
+        </Route>
 
         </Routes>
       </BrowserRouter>
-      
+      {/* <AdminLayout />
+    
+    <ApplicantDashboard />
+    <JobListings /> */}
 
     </>
   );
