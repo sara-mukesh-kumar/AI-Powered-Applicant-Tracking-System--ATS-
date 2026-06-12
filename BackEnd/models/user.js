@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema(
       enum: ["applicant", "recruiter", "admin"],
       default: "applicant",
     },
+    status: {                          
+    type: String,
+    enum: ["active", "pending", "suspended"],
+    default: "active"
+  },
     // Optional profile info for applicants
     skills: [{ type: String }],
     resumeUrl: { type: String }, // General profile resume

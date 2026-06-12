@@ -4,6 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -24,6 +25,7 @@ mongoose
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes); 
+app.use("/api/admin", adminRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
