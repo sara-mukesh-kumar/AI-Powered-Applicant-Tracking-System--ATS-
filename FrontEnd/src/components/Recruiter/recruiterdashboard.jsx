@@ -74,9 +74,9 @@ function RecruiterDashboard() {
   // Mixed Data: Real Jobs Count + Mock Data for Applications (until we build the app logic)
   const stats = [
     { title: "Total Jobs Posted", value: jobs.length, icon: "💼", color: "text-blue-600", bg: "bg-blue-100" },
-    { title: "Applications Received", value: "0", icon: "📄", color: "text-indigo-600", bg: "bg-indigo-100" },
-    { title: "Shortlisted Candidates", value: "0", icon: "⭐", color: "text-emerald-600", bg: "bg-emerald-100" },
-    { title: "Interviews Scheduled", value: "0", icon: "📅", color: "text-amber-600", bg: "bg-amber-100" },
+    { title: "Applications Received", value: "5", icon: "📄", color: "text-indigo-600", bg: "bg-indigo-100" },
+    { title: "Shortlisted Candidates", value: "2", icon: "⭐", color: "text-emerald-600", bg: "bg-emerald-100" },
+    { title: "Interviews Scheduled", value: "1", icon: "📅", color: "text-amber-600", bg: "bg-amber-100" },
   ];
 
   return (
