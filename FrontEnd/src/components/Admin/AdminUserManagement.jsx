@@ -1,14 +1,5 @@
-import { useState } from "react";
-
-// Fake data — backend banne tak
-const fakeUsers = [
-  { _id: "1", name: "Ali Hassan", email: "ali@gmail.com", role: "recruiter", status: "active", createdAt: "2026-01-15" },
-  { _id: "2", name: "Sara Khan", email: "sara@gmail.com", role: "recruiter", status: "pending", createdAt: "2026-02-20" },
-  { _id: "3", name: "Ahmed Raza", email: "ahmed@gmail.com", role: "applicant", status: "active", createdAt: "2026-03-10" },
-  { _id: "4", name: "Fatima Malik", email: "fatima@gmail.com", role: "applicant", status: "active", createdAt: "2026-03-22" },
-  { _id: "5", name: "Usman Tariq", email: "usman@gmail.com", role: "recruiter", status: "suspended", createdAt: "2026-04-05" },
-  { _id: "6", name: "Zara Ahmed", email: "zara@gmail.com", role: "applicant", status: "active", createdAt: "2026-04-18" },
-];
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const roleBadge = (role) => {
   if (role === "recruiter") return "bg-purple-100 text-purple-700";
@@ -24,12 +15,42 @@ const statusBadge = (status) => {
 };
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(fakeUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const navigate = useNavigate();
 
-  // Search + Filter Logic
+  const token = localStorage.getItem("token");
+
+  // Users Fetch
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          navigate("/admin/login");
+          return;
+        }
+
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        setError("Users load nahi ho sake");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Filter Logic
   const filteredUsers = users.filter((user) => {
     const matchSearch =
       user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -39,36 +60,70 @@ export default function UserManagement() {
     return matchSearch && matchRole && matchStatus;
   });
 
-  // Status Change Handler
-  const handleStatusChange = (id, newStatus) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user._id === id ? { ...user, status: newStatus } : user
-      )
-    );
-  };
+  // Status Change — Real API
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-  // Delete Handler
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers((prev) => prev.filter((user) => user._id !== id));
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((user) =>
+            user._id === id ? { ...user, status: newStatus } : user
+          )
+        );
+      }
+    } catch (err) {
+      setError("Status update nahi ho saka");
     }
   };
+
+  // Delete — Real API
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setUsers((prev) => prev.filter((user) => user._id !== id));
+      }
+    } catch (err) {
+      setError("User delete nahi ho saka");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-400 text-lg">Loading users...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
 
-      {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Manage all recruiters and applicants
-        </p>
+        <p className="text-gray-500 text-sm mt-1">Manage all recruiters and applicants</p>
       </div>
 
-      {/* Filters Row */}
+      {error && (
+        <div className="bg-red-100 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
+      )}
+
+      {/* Filters */}
       <div className="bg-white rounded-2xl shadow p-4 flex flex-wrap gap-3 items-center">
-        {/* Search */}
         <input
           type="text"
           placeholder="🔍 Search by name or email..."
@@ -76,8 +131,6 @@ export default function UserManagement() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
-        {/* Role Filter */}
         <select
           className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={roleFilter}
@@ -87,8 +140,6 @@ export default function UserManagement() {
           <option value="recruiter">Recruiter</option>
           <option value="applicant">Applicant</option>
         </select>
-
-        {/* Status Filter */}
         <select
           className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={statusFilter}
@@ -99,8 +150,6 @@ export default function UserManagement() {
           <option value="pending">Pending</option>
           <option value="suspended">Suspended</option>
         </select>
-
-        {/* Total Count */}
         <span className="text-sm text-gray-500 ml-auto">
           Showing {filteredUsers.length} of {users.length} users
         </span>
@@ -129,8 +178,6 @@ export default function UserManagement() {
             ) : (
               filteredUsers.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 transition">
-
-                  {/* Name */}
                   <td className="px-6 py-4 font-medium text-gray-800">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
@@ -139,33 +186,23 @@ export default function UserManagement() {
                       {user.name}
                     </div>
                   </td>
-
-                  {/* Email */}
                   <td className="px-6 py-4 text-gray-500">{user.email}</td>
-
-                  {/* Role Badge */}
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${roleBadge(user.role)}`}>
                       {user.role}
                     </span>
                   </td>
-
-                  {/* Status Badge */}
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(user.status)}`}>
-                      {user.status}
+                      {user.status || "active"}
                     </span>
                   </td>
-
-                  {/* Joined Date */}
-                  <td className="px-6 py-4 text-gray-500">{user.createdAt}</td>
-
-                  {/* Actions */}
+                  <td className="px-6 py-4 text-gray-500">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-
-                      {/* Approve Button — sirf pending ke liye */}
-                      {user.status === "pending" && (
+                      {(!user.status || user.status === "pending") && (
                         <button
                           onClick={() => handleStatusChange(user._id, "active")}
                           className="bg-green-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-green-600 transition"
@@ -173,8 +210,6 @@ export default function UserManagement() {
                           Approve
                         </button>
                       )}
-
-                      {/* Suspend Button — sirf active ke liye */}
                       {user.status === "active" && (
                         <button
                           onClick={() => handleStatusChange(user._id, "suspended")}
@@ -183,8 +218,6 @@ export default function UserManagement() {
                           Suspend
                         </button>
                       )}
-
-                      {/* Reactivate — sirf suspended ke liye */}
                       {user.status === "suspended" && (
                         <button
                           onClick={() => handleStatusChange(user._id, "active")}
@@ -193,15 +226,12 @@ export default function UserManagement() {
                           Reactivate
                         </button>
                       )}
-
-                      {/* Delete Button */}
                       <button
                         onClick={() => handleDelete(user._id)}
                         className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"
                       >
                         Delete
                       </button>
-
                     </div>
                   </td>
                 </tr>
