@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import Job from "../models/Job.js";
+import Application from "../models/application.js"; // 1. Application model import kiya
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -14,10 +15,11 @@ router.get("/stats", async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalRecruiters = await User.countDocuments({ role: "recruiter" });
     const totalApplicants = await User.countDocuments({ role: "applicant" });
+    const totalApplications = await Application.countDocuments(); // 2. Real application count kiya
 
     res.json({
       totalJobs,
-      totalApplications: 0, // Application model banne pe update hoga
+      totalApplications, 
       totalRecruiters,
       totalApplicants,
     });
@@ -100,6 +102,31 @@ router.delete("/jobs/:id", async (req, res) => {
     const job = await Job.findByIdAndDelete(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
     res.json({ message: "Job deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// 3. NEW: GET /api/admin/applications — Get all applications
+router.get("/applications", async (req, res) => {
+  try {
+    const applications = await Application.find()
+      .populate("jobId", "title company location") 
+      .populate("applicantId", "name email")       
+      .sort({ createdAt: -1 });                    
+
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// 4. NEW: DELETE /api/admin/applications/:id — Delete an application
+router.delete("/applications/:id", async (req, res) => {
+  try {
+    const application = await Application.findByIdAndDelete(req.params.id);
+    if (!application) return res.status(404).json({ message: "Application not found" });
+    res.json({ message: "Application deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

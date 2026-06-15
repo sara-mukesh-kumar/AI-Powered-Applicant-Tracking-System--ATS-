@@ -1,70 +1,133 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const fakeApplications = [
-  { _id: "1", applicantName: "Ahmed Raza", email: "ahmed@gmail.com", jobTitle: "Frontend Developer", company: "TechCorp", status: "applied", aiScore: 87, appliedAt: "2026-05-01" },
-  { _id: "2", applicantName: "Fatima Malik", email: "fatima@gmail.com", jobTitle: "Backend Engineer", company: "SoftHouse", status: "interview", aiScore: 92, appliedAt: "2026-05-03" },
-  { _id: "3", applicantName: "Zara Ahmed", email: "zara@gmail.com", jobTitle: "UI/UX Designer", company: "CreativeLab", status: "offered", aiScore: 78, appliedAt: "2026-05-05" },
-  { _id: "4", applicantName: "Hassan Ali", email: "hassan@gmail.com", jobTitle: "React Native Dev", company: "AppStudio", status: "rejected", aiScore: 45, appliedAt: "2026-05-07" },
-  { _id: "5", applicantName: "Sana Tariq", email: "sana@gmail.com", jobTitle: "DevOps Engineer", company: "CloudTech", status: "applied", aiScore: 65, appliedAt: "2026-05-10" },
-  { _id: "6", applicantName: "Bilal Khan", email: "bilal@gmail.com", jobTitle: "Data Scientist", company: "AI Solutions", status: "interview", aiScore: 95, appliedAt: "2026-05-12" },
-];
-
+// Status Badge Colors Matching Backend Enum Case
 const statusBadge = (status) => {
-  if (status === "applied") return "bg-blue-100 text-blue-700";
-  if (status === "interview") return "bg-purple-100 text-purple-700";
-  if (status === "offered") return "bg-green-100 text-green-700";
-  if (status === "rejected") return "bg-red-100 text-red-700";
-  return "bg-gray-100 text-gray-700";
+  const lowerStatus = status?.toLowerCase();
+  if (lowerStatus === "applied") return "bg-blue-100 text-blue-700 capitalize";
+  if (lowerStatus === "interview") return "bg-purple-100 text-purple-700 capitalize";
+  if (lowerStatus === "offered") return "bg-green-100 text-green-700 capitalize";
+  if (lowerStatus === "rejected") return "bg-red-100 text-red-700 capitalize";
+  return "bg-gray-100 text-gray-700 capitalize";
 };
 
 const aiScoreColor = (score) => {
+  if (!score && score !== 0) return "text-gray-500";
   if (score >= 80) return "text-green-600";
   if (score >= 60) return "text-yellow-600";
   return "text-red-600";
 };
 
 const aiScoreBg = (score) => {
+  if (!score && score !== 0) return "bg-gray-50 border border-gray-200";
   if (score >= 80) return "bg-green-50 border border-green-200";
   if (score >= 60) return "bg-yellow-50 border border-yellow-200";
   return "bg-red-50 border border-red-200";
 };
 
 export default function ApplicationsMonitor() {
-  const [applications, setApplications] = useState(fakeApplications);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
 
-  // Search + Filter Logic
-  const filteredApps = applications.filter((app) => {
-    const matchSearch =
-      app.applicantName.toLowerCase().includes(search.toLowerCase()) ||
-      app.jobTitle.toLowerCase().includes(search.toLowerCase()) ||
-      app.company.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || app.status === statusFilter;
-    const matchScore =
-      scoreFilter === "all" ||
-      (scoreFilter === "high" && app.aiScore >= 80) ||
-      (scoreFilter === "medium" && app.aiScore >= 60 && app.aiScore < 80) ||
-      (scoreFilter === "low" && app.aiScore < 60);
-    return matchSearch && matchStatus && matchScore;
-  });
-
-  // Delete Handler
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this application?")) {
-      setApplications((prev) => prev.filter((app) => app._id !== id));
+  // Fetch data from real backend api
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/admin/applications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to fetch applications data.");
+      }
+      
+      const data = await res.json();
+      setApplications(data);
+      setError("");
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  // Delete Handler connected to database
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this application permanently from the system?")) {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`/api/admin/applications/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          // Remove from local array state immediately
+          setApplications((prev) => prev.filter((app) => app._id !== id));
+        } else {
+          alert("Failed to delete application from server.");
+        }
+      } catch (err) {
+        console.error("Error during deletion:", err);
+        alert("Server error occurred while deleting.");
+      }
+    }
+  };
+
+  // Search + Filter Logic matching backend structure
+  const filteredApps = applications.filter((app) => {
+    const applicantName = app.applicantId?.name || "";
+    const jobTitle = app.jobId?.title || "";
+    const company = app.jobId?.company || "";
+    const appStatus = app.status || "Applied";
+    const aiScore = app.aiScore || 0;
+
+    const matchSearch =
+      applicantName.toLowerCase().includes(search.toLowerCase()) ||
+      jobTitle.toLowerCase().includes(search.toLowerCase()) ||
+      company.toLowerCase().includes(search.toLowerCase());
+
+    const matchStatus = 
+      statusFilter === "all" || 
+      appStatus.toLowerCase() === statusFilter.toLowerCase();
+
+    const matchScore =
+      scoreFilter === "all" ||
+      (scoreFilter === "high" && aiScore >= 80) ||
+      (scoreFilter === "medium" && aiScore >= 60 && aiScore < 80) ||
+      (scoreFilter === "low" && aiScore < 60);
+
+    return matchSearch && matchStatus && matchScore;
+  });
+
+  if (loading) {
+    return <div className="text-center py-10 text-gray-500 font-medium">Loading applications...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500 font-medium">Error: {error}</div>;
+  }
+
   return (
     <div className="space-y-6">
-
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">Applications Monitor</h2>
         <p className="text-gray-500 text-sm mt-1">
-          Track and monitor all applications with AI scores
+          Track and monitor all system applications with live AI scores
         </p>
       </div>
 
@@ -72,25 +135,25 @@ export default function ApplicationsMonitor() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="bg-white rounded-2xl shadow p-4 text-center">
           <p className="text-2xl font-bold text-blue-600">
-            {applications.filter((a) => a.status === "applied").length}
+            {applications.filter((a) => a.status?.toLowerCase() === "applied").length}
           </p>
           <p className="text-sm text-gray-500 mt-1">Applied</p>
         </div>
         <div className="bg-white rounded-2xl shadow p-4 text-center">
           <p className="text-2xl font-bold text-purple-600">
-            {applications.filter((a) => a.status === "interview").length}
+            {applications.filter((a) => a.status?.toLowerCase() === "interview").length}
           </p>
           <p className="text-sm text-gray-500 mt-1">Interview</p>
         </div>
         <div className="bg-white rounded-2xl shadow p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
-            {applications.filter((a) => a.status === "offered").length}
+            {applications.filter((a) => a.status?.toLowerCase() === "offered").length}
           </p>
           <p className="text-sm text-gray-500 mt-1">Offered</p>
         </div>
         <div className="bg-white rounded-2xl shadow p-4 text-center">
           <p className="text-2xl font-bold text-red-600">
-            {applications.filter((a) => a.status === "rejected").length}
+            {applications.filter((a) => a.status?.toLowerCase() === "rejected").length}
           </p>
           <p className="text-sm text-gray-500 mt-1">Rejected</p>
         </div>
@@ -149,40 +212,39 @@ export default function ApplicationsMonitor() {
             {filteredApps.length === 0 ? (
               <tr>
                 <td colSpan="7" className="text-center py-10 text-gray-400">
-                  No applications found
+                  No applications found in the system.
                 </td>
               </tr>
             ) : (
               filteredApps.map((app) => (
                 <tr key={app._id} className="hover:bg-gray-50 transition">
-
-                  {/* Applicant */}
+                  {/* Applicant Info populated from User */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs">
-                        {app.applicantName.charAt(0)}
+                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs uppercase">
+                        {(app.applicantId?.name || "U").charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">{app.applicantName}</p>
-                        <p className="text-xs text-gray-400">{app.email}</p>
+                        <p className="font-medium text-gray-800">{app.applicantId?.name || "Unknown User"}</p>
+                        <p className="text-xs text-gray-400">{app.applicantId?.email || "N/A"}</p>
                       </div>
                     </div>
                   </td>
 
-                  {/* Job Title */}
+                  {/* Job Title populated from Job */}
                   <td className="px-6 py-4 font-medium text-gray-700">
-                    {app.jobTitle}
+                    {app.jobId?.title || "Deleted Job Position"}
                   </td>
 
-                  {/* Company */}
-                  <td className="px-6 py-4 text-gray-500">{app.company}</td>
+                  {/* Company populated from Job */}
+                  <td className="px-6 py-4 text-gray-500">{app.jobId?.company || "N/A"}</td>
 
                   {/* AI Score */}
                   <td className="px-6 py-4">
                     <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${aiScoreBg(app.aiScore)}`}>
                       <span>🤖</span>
                       <span className={aiScoreColor(app.aiScore)}>
-                        {app.aiScore}%
+                        {app.aiScore !== undefined ? `${app.aiScore}%` : "N/A"}
                       </span>
                     </div>
                   </td>
@@ -190,30 +252,30 @@ export default function ApplicationsMonitor() {
                   {/* Status */}
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(app.status)}`}>
-                      {app.status}
+                      {app.status || "Applied"}
                     </span>
                   </td>
 
-                  {/* Applied On */}
-                  <td className="px-6 py-4 text-gray-500">{app.appliedAt}</td>
+                  {/* Applied On - Formatted Date */}
+                  <td className="px-6 py-4 text-gray-500">
+                    {app.createdAt ? new Date(app.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : "N/A"}
+                  </td>
 
                   {/* Actions */}
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleDelete(app._id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"
+                      className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"
                     >
                       Delete
                     </button>
                   </td>
-
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
