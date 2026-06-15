@@ -7,7 +7,7 @@ import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Registration";
 
 // Admin Components
-import AdminLogin from "./components/Admin/AdminLogin";
+// import AdminLogin from "./components/Admin/AdminLogin";
 import AdminLayout from "./components/Admin/AdminLayout";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminUserManagement from "./components/Admin/AdminUserManagement";
@@ -63,7 +63,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+        {/* <Route path="/admin/login" element={<AdminLogin />} /> */}
 
         {/* ================= ADMIN ROUTES ================= */}
         <Route 
