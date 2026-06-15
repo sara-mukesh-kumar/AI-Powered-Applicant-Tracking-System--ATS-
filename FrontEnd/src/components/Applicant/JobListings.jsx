@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ApplicantApplicationModal from "./ApplicantApplyJob";
-// import ApplicantNavbar from "./ApplicantNavbar";
+import ApplicantNavbar from "./ApplicantNavbar";
 
 const jobsData = [
   { id: 1, title: "MERN Stack Developer", company: "ABC Technologies", location: "Chennai", type: "Full Time", match: "92% Match", posted: "2 days ago" },

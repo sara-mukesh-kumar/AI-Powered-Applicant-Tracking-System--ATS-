@@ -1,10 +1,6 @@
 import ApplicantNavbar from "./ApplicantNavbar";
 
-const applications = [
-  { role: "MERN Stack Developer", company: "ABC Technologies", date: "June 4, 2026", status: "Interview", color: "bg-blue-100 text-blue-700" },
-  { role: "React Developer", company: "XYZ Solutions", date: "June 2, 2026", status: "Review", color: "bg-amber-100 text-amber-700" },
-  { role: "Frontend Engineer", company: "Pixel Labs", date: "May 30, 2026", status: "Applied", color: "bg-emerald-100 text-emerald-700" },
-];
+const applications = [];
 
 function ApplicationTracker() {
   return (
@@ -17,7 +13,7 @@ function ApplicationTracker() {
 
       <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
-          {[["12", "Total applications"], ["3", "Interviews"], ["1", "Offer received"]].map(
+          {[["0", "Total applications"], ["0", "Interviews"], ["0", "Offer received"]].map(
             ([value, label]) => (
               <article className="rounded-2xl bg-white p-5 shadow-sm" key={label}>
                 <strong className="text-3xl text-blue-600">{value}</strong>
