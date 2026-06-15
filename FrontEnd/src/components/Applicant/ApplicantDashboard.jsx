@@ -2,16 +2,12 @@ import { useNavigate } from "react-router-dom";
 import ApplicantNavbar from "./ApplicantNavbar";
 
 const stats = [
-  { label: "Applied Jobs", value: "12", helper: "4 active this week", color: "text-blue-600", background: "bg-blue-50" },
-  { label: "Interviews", value: "3", helper: "2 scheduled soon", color: "text-amber-600", background: "bg-amber-50" },
-  { label: "Offers", value: "1", helper: "Awaiting response", color: "text-emerald-600", background: "bg-emerald-50" },
+  { label: "Applied Jobs", value: "0", helper: "No applications yet", color: "text-blue-600", background: "bg-blue-50" },
+  { label: "Interviews", value: "0", helper: "No interviews scheduled", color: "text-amber-600", background: "bg-amber-50" },
+  { label: "Offers", value: "0", helper: "No offers yet", color: "text-emerald-600", background: "bg-emerald-50" },
 ];
 
-const applications = [
-  { job: "MERN Developer", company: "ABC Tech", date: "June 4, 2026", status: "Applied", style: "bg-emerald-100 text-emerald-700" },
-  { job: "Frontend Engineer", company: "Pixel Labs", date: "June 2, 2026", status: "Interview", style: "bg-blue-100 text-blue-700" },
-  { job: "React Developer", company: "XYZ Solutions", date: "May 30, 2026", status: "Review", style: "bg-amber-100 text-amber-700" },
-];
+const applications = [];
 
 const recommendedJobs = [
   { title: "MERN Stack Developer", company: "ABC Technologies", location: "Chennai", type: "Full Time", match: "92% Match" },
@@ -20,6 +16,7 @@ const recommendedJobs = [
 
 function ApplicantDashboard() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -32,9 +29,9 @@ function ApplicantDashboard() {
       <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
         <section className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 p-7 text-white shadow-lg sm:p-9">
           <p className="text-sm font-bold uppercase tracking-[0.22em] text-blue-200">Welcome back</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Mohan</h2>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{user.name || "Applicant"}</h2>
           <p className="mt-3 max-w-2xl leading-7 text-blue-100">
-            You have two interviews coming up. Review your applications and keep your resume current.
+            Build your profile, discover matching roles, and track your applications here.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button

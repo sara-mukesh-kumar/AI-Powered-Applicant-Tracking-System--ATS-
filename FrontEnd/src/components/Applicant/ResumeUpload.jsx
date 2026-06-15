@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-// import ApplicantNavbar from "./ApplicantNavbar";
+import ApplicantNavbar from "./ApplicantNavbar";
 
 function ResumeUpload() {
   const inputRef = useRef(null);

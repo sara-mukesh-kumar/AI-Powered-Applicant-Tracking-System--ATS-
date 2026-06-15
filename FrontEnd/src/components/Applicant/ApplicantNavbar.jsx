@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ArrowRightOnRectangleIcon,
   Bars3Icon,
   BriefcaseIcon,
   ChartBarSquareIcon,
@@ -52,6 +53,13 @@ function ApplicantNavbar({ section = "Applicant Portal", title = "ATS Portal", d
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setMenuOpen(false);
+    navigate("/", { replace: true });
+  };
+
   return (
     <>
       <header className="hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 text-white shadow-lg lg:block">
@@ -92,6 +100,15 @@ function ApplicantNavbar({ section = "Applicant Portal", title = "ATS Portal", d
                 </li>
               );
             })}
+            <li>
+              <button
+                className="rounded-full border border-white/30 px-4 py-2 text-blue-50 transition hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white/70"
+                onClick={handleLogout}
+                type="button"
+              >
+                Logout
+              </button>
+            </li>
           </ul>
         </nav>
       </header>
@@ -165,10 +182,20 @@ function ApplicantNavbar({ section = "Applicant Portal", title = "ATS Portal", d
               />
             </div>
 
-            <div className="mt-auto rounded-2xl bg-white/10 p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-200">{section}</p>
-              <p className="mt-1 font-bold">{title}</p>
-              {description && <p className="mt-2 text-xs leading-5 text-blue-100">{description}</p>}
+            <div className="mt-auto space-y-3">
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-200">{section}</p>
+                <p className="mt-1 font-bold">{title}</p>
+                {description && <p className="mt-2 text-xs leading-5 text-blue-100">{description}</p>}
+              </div>
+              <button
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 px-4 py-3 font-semibold text-white transition hover:bg-white hover:text-blue-700"
+                onClick={handleLogout}
+                type="button"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                Logout
+              </button>
             </div>
           </aside>
         </div>

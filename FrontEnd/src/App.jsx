@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import "./App.css";
 
 // Auth Components
@@ -7,7 +7,6 @@ import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Registration";
 
 // Admin Components
-import AdminLogin from "./components/Admin/AdminLogin";
 import AdminLayout from "./components/Admin/AdminLayout";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminUserManagement from "./components/Admin/AdminUserManagement";
@@ -29,6 +28,7 @@ import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
 import ApplicantDashboard from "./components/Applicant/ApplicantDashboard";
 import ApplicantProfile from "./components/Applicant/ApplicantProfile";
 import JobDetails from "./components/Applicant/JobDetails";
+import JobListings from "./components/Applicant/JobListings";
 import ResumeUpload from "./components/Applicant/ResumeUpload";
 
 // ==========================================
@@ -63,7 +63,6 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* ================= ADMIN ROUTES ================= */}
         <Route 
@@ -102,13 +101,14 @@ function App() {
           path="/applicant" 
           element={
             <ProtectedRoute allowedRoles={["applicant"]}>
-              <ApplicantDashboard />
+              <Outlet />
             </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<ApplicantDashboard />} />
           <Route path="profile" element={<ApplicantProfile />} />
+          <Route path="joblisting" element={<JobListings />} />
           <Route path="jobDetails" element={<JobDetails />} />
           <Route path="resumeupload" element={<ResumeUpload />} />
         </Route>

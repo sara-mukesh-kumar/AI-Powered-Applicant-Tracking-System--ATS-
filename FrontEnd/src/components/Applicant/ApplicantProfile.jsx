@@ -1,16 +1,26 @@
 import { useState } from "react";
-// import ApplicantNavbar from "./ApplicantNavbar";
+import ApplicantNavbar from "./ApplicantNavbar";
 
 const skills = ["React", "JavaScript", "Node.js", "MongoDB", "Tailwind CSS"];
 
-const initialProfile = {
-  name: "Mohan",
-  role: "MERN Stack Developer",
-  email: "mohan@example.com",
-  phone: "+91 12345 67890",
-  location: "Madurai, India",
-  summary:
-    "Frontend-focused MERN developer with experience building responsive web applications and clean user experiences. Comfortable collaborating across product, design, and backend teams.",
+const getInitialProfile = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const storageKey = user._id ? `applicantProfile:${user._id}` : null;
+  const savedProfile = storageKey
+    ? JSON.parse(localStorage.getItem(storageKey) || "null")
+    : null;
+
+  return {
+    storageKey,
+    profile: savedProfile || {
+      name: user.name || "",
+      role: "Applicant",
+      email: user.email || "",
+      phone: "",
+      location: "",
+      summary: "",
+    },
+  };
 };
 
 function ProfileField({ label, name, value, onChange, type = "text" }) {
@@ -29,6 +39,7 @@ function ProfileField({ label, name, value, onChange, type = "text" }) {
 }
 
 function ApplicantProfile() {
+  const [{ storageKey, profile: initialProfile }] = useState(getInitialProfile);
   const [profile, setProfile] = useState(initialProfile);
   const [draft, setDraft] = useState(initialProfile);
   const [editing, setEditing] = useState(false);
@@ -61,6 +72,9 @@ function ApplicantProfile() {
   const saveProfile = (event) => {
     event.preventDefault();
     setProfile(draft);
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(draft));
+    }
     setEditing(false);
     setSaved(true);
   };
@@ -80,12 +94,12 @@ function ApplicantProfile() {
             Open to work
           </div>
           <div className="px-6 pb-7 sm:px-8">
-            <div className="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-bold text-blue-700 shadow-md">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="-mt-14 flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-bold text-blue-700 shadow-md">
                   {initials || "MK"}
                 </div>
-                <div className="pb-1">
+                <div className="pt-4 sm:pt-5">
                   <h2 className="text-3xl font-bold tracking-tight">{profile.name}</h2>
                   <p className="mt-1 text-lg text-slate-500">{profile.role}</p>
                   <p className="mt-2 text-sm font-semibold text-blue-600">{profile.location}</p>

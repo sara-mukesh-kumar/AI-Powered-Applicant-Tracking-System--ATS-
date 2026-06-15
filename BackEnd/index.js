@@ -1,13 +1,14 @@
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
+import dns from "node:dns";
 import jobRoutes from "./routes/jobRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const app = express();
 
 // Middleware

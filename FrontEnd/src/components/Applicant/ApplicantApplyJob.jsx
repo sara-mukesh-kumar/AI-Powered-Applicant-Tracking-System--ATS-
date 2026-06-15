@@ -1,6 +1,10 @@
 import { useState } from "react";
 
 function ApplicantApplicationModal({ job, onClose }) {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const savedProfile = user._id
+    ? JSON.parse(localStorage.getItem(`applicantProfile:${user._id}`) || "null")
+    : null;
   const [note, setNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -63,8 +67,8 @@ function ApplicantApplicationModal({ job, onClose }) {
             </div>
 
             <div className="mt-6 rounded-2xl bg-blue-50 p-4">
-              <p className="font-bold text-slate-800">Mohan Kumar</p>
-              <p className="mt-1 text-sm text-slate-600">MERN Stack Developer</p>
+              <p className="font-bold text-slate-800">{savedProfile?.name || user.name || "Applicant"}</p>
+              <p className="mt-1 text-sm text-slate-600">{savedProfile?.role || "Applicant"}</p>
               <p className="mt-2 text-xs font-semibold text-blue-700">
                 Your saved profile and latest resume will be included.
               </p>
