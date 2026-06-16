@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4">
+// 1. StatCard clickable hai aur custom click handlers accept karta hai
+const StatCard = ({ title, value, icon, color, onClick }) => (
+  <div 
+    onClick={onClick}
+    className="cursor-pointer bg-white rounded-2xl shadow p-6 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:translate-y-0 select-none"
+  >
     <div className={`text-4xl p-3 rounded-xl ${color}`}>{icon}</div>
     <div>
       <p className="text-sm text-gray-500 font-medium">{title}</p>
@@ -26,12 +30,12 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/admin/stats", {
+        const res = await fetch("/api/admin/stats", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.status === 401 || res.status === 403) {
-          navigate("/admin/login");
+          navigate("/"); 
           return;
         }
 
@@ -45,15 +49,14 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, []);
+  }, [navigate]);
 
-  // Logged in admin ka naam
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400 text-lg">Loading...</p>
+        <p className="text-gray-400 text-lg font-medium">Loading Stats...</p>
       </div>
     );
   }
@@ -76,12 +79,43 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Stat Cards */}
+      {/* Stat Cards - Connected to dynamic filtering via react-router state */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total Jobs" value={stats.totalJobs} icon="💼" color="bg-blue-100" />
-        <StatCard title="Total Applications" value={stats.totalApplications} icon="📋" color="bg-green-100" />
-        <StatCard title="Total Recruiters" value={stats.totalRecruiters} icon="🧑‍💼" color="bg-purple-100" />
-        <StatCard title="Total Applicants" value={stats.totalApplicants} icon="👥" color="bg-yellow-100" />
+        {/* Total Jobs Card */}
+        <StatCard 
+          title="Total Jobs" 
+          value={stats.totalJobs} 
+          icon="💼" 
+          color="bg-blue-100" 
+          onClick={() => navigate("/admin/jobs")}
+        />
+        
+        {/* Total Applications Card */}
+        <StatCard 
+          title="Total Applications" 
+          value={stats.totalApplications} 
+          icon="📋" 
+          color="bg-green-100" 
+          onClick={() => navigate("/admin/applications")}
+        />
+        
+        {/* Total Recruiters Card - Sends navigation state payload */}
+        <StatCard 
+          title="Total Recruiters" 
+          value={stats.totalRecruiters} 
+          icon="🧑‍💼" 
+          color="bg-purple-100" 
+          onClick={() => navigate("/admin/users", { state: { filterRole: "recruiter" } })}
+        />
+        
+        {/* Total Applicants Card - Sends navigation state payload */}
+        <StatCard 
+          title="Total Applicants" 
+          value={stats.totalApplicants} 
+          icon="👥" 
+          color="bg-yellow-100" 
+          onClick={() => navigate("/admin/users", { state: { filterRole: "applicant" } })}
+        />
       </div>
 
       {/* Quick Actions */}
@@ -90,19 +124,19 @@ export default function AdminDashboard() {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => navigate("/admin/users")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
+            className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
           >
             👥 Manage Users
           </button>
           <button
             onClick={() => navigate("/admin/applications")}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition"
+            className="cursor-pointer bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition"
           >
             📋 View Applications
           </button>
           <button
             onClick={() => navigate("/admin/jobs")}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 transition"
+            className="cursor-pointer bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 transition"
           >
             💼 View Jobs
           </button>

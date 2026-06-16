@@ -1,40 +1,51 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // 1. useLocation import kiya
 
 const roleBadge = (role) => {
-  if (role === "recruiter") return "bg-purple-100 text-purple-700";
-  if (role === "applicant") return "bg-blue-100 text-blue-700";
-  return "bg-gray-100 text-gray-700";
+  if (role === "recruiter") return "bg-purple-100 text-purple-700 capitalize";
+  if (role === "applicant") return "bg-blue-100 text-blue-700 capitalize";
+  return "bg-gray-100 text-gray-700 capitalize";
 };
 
 const statusBadge = (status) => {
-  if (status === "active") return "bg-green-100 text-green-700";
-  if (status === "pending") return "bg-yellow-100 text-yellow-700";
-  if (status === "suspended") return "bg-red-100 text-red-700";
-  return "bg-gray-100 text-gray-700";
+  if (status === "active") return "bg-green-100 text-green-700 capitalize";
+  if (status === "pending") return "bg-yellow-100 text-yellow-700 capitalize";
+  if (status === "suspended") return "bg-red-100 text-red-700 capitalize";
+  return "bg-gray-100 text-gray-700 capitalize";
 };
 
 export default function UserManagement() {
+  const location = useLocation(); // 2. Location hook initialize kiya
+  const navigate = useNavigate();
+  
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  
+  // 3. Initial state dashboard se aane wale state condition par depend karegi
+  const [roleFilter, setRoleFilter] = useState(location.state?.filterRole || "all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
 
-  // Users Fetch
+  // Dashboard clicks ke beech dynamic switching sync rakhne ke liye hook listener
+  useEffect(() => {
+    if (location.state?.filterRole) {
+      setRoleFilter(location.state.filterRole);
+    }
+  }, [location.state]);
+
+  // Users Fetch via Proxy path
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/users", {
+        const res = await fetch("/api/admin/users", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.status === 401 || res.status === 403) {
-          navigate("/admin/login");
+          navigate("/"); 
           return;
         }
 
@@ -48,22 +59,22 @@ export default function UserManagement() {
     };
 
     fetchUsers();
-  }, []);
+  }, [token, navigate]);
 
   // Filter Logic
   const filteredUsers = users.filter((user) => {
     const matchSearch =
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase());
+      user.name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === "all" || user.role === roleFilter;
     const matchStatus = statusFilter === "all" || user.status === statusFilter;
     return matchSearch && matchRole && matchStatus;
   });
 
-  // Status Change — Real API
+  // Status Change — Real API via Proxy
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/status`, {
+      const res = await fetch(`/api/admin/users/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -84,12 +95,12 @@ export default function UserManagement() {
     }
   };
 
-  // Delete — Real API
+  // Delete — Real API via Proxy
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+      const res = await fetch(`/api/admin/users/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -105,14 +116,13 @@ export default function UserManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400 text-lg">Loading users...</p>
+        <p className="text-gray-400 text-lg font-medium">Loading users...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-
       <div>
         <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
         <p className="text-gray-500 text-sm mt-1">Manage all recruiters and applicants</p>
@@ -180,8 +190,8 @@ export default function UserManagement() {
                 <tr key={user._id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 font-medium text-gray-800">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                        {user.name.charAt(0)}
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
+                        {(user.name || "U").charAt(0)}
                       </div>
                       {user.name}
                     </div>
@@ -198,14 +208,14 @@ export default function UserManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-IN") : "N/A"}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       {(!user.status || user.status === "pending") && (
                         <button
                           onClick={() => handleStatusChange(user._id, "active")}
-                          className="bg-green-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-green-600 transition"
+                          className="cursor-pointer bg-green-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-green-600 transition"
                         >
                           Approve
                         </button>
@@ -213,7 +223,7 @@ export default function UserManagement() {
                       {user.status === "active" && (
                         <button
                           onClick={() => handleStatusChange(user._id, "suspended")}
-                          className="bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-yellow-600 transition"
+                          className="cursor-pointer bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-yellow-600 transition"
                         >
                           Suspend
                         </button>
@@ -221,14 +231,14 @@ export default function UserManagement() {
                       {user.status === "suspended" && (
                         <button
                           onClick={() => handleStatusChange(user._id, "active")}
-                          className="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-600 transition"
+                          className="cursor-pointer bg-blue-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-600 transition"
                         >
                           Reactivate
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(user._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"
+                        className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"
                       >
                         Delete
                       </button>
@@ -240,7 +250,6 @@ export default function UserManagement() {
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
