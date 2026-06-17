@@ -8,6 +8,7 @@ import jobRoutes from "./routes/jobRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
+console.log(process.env.MONGO_URI);
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const app = express();
 
