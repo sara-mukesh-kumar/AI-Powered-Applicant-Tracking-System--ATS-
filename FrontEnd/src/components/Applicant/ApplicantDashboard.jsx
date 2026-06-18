@@ -91,6 +91,55 @@ function ApplicantDashboard() {
           </article>
 
           <article className="rounded-2xl bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Performance</p>
+            <h2 className="mt-1 text-xl font-bold">Profile Views</h2>
+            <div className="mt-6">
+              <div className="flex items-end gap-1.5">
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-10 w-6 bg-blue-200 rounded-sm" title="Mon: 4 views"></div>
+                  <span className="text-xs text-slate-500">Mon</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-12 w-6 bg-blue-300 rounded-sm" title="Tue: 6 views"></div>
+                  <span className="text-xs text-slate-500">Tue</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-8 w-6 bg-blue-200 rounded-sm" title="Wed: 3 views"></div>
+                  <span className="text-xs text-slate-500">Wed</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-16 w-6 bg-blue-500 rounded-sm" title="Thu: 8 views"></div>
+                  <span className="text-xs text-slate-500">Thu</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-14 w-6 bg-blue-400 rounded-sm" title="Fri: 7 views"></div>
+                  <span className="text-xs text-slate-500">Fri</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-12 w-6 bg-blue-300 rounded-sm" title="Sat: 5 views"></div>
+                  <span className="text-xs text-slate-500">Sat</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="h-10 w-6 bg-blue-200 rounded-sm" title="Sun: 4 views"></div>
+                  <span className="text-xs text-slate-500">Sun</span>
+                </div>
+              </div>
+              <div className="mt-5 flex items-center gap-6">
+                <div>
+                  <p className="text-2xl font-bold text-blue-600">37</p>
+                  <p className="text-xs text-slate-500">Total Views</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600">+15%</p>
+                  <p className="text-xs text-slate-500">vs last week</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section className="mb-6 grid gap-6 lg:grid-cols-2">
+          <article className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Schedule</p>
             <h2 className="mt-1 text-xl font-bold">Upcoming Interviews</h2>
             <div className="mt-4 space-y-3">
@@ -116,6 +165,49 @@ function ApplicantDashboard() {
               </div>
             </div>
           </article>
+
+          <article className="rounded-2xl bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Messages</p>
+            <h2 className="mt-1 text-xl font-bold">Recent Inquiries</h2>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition cursor-pointer">
+                <div className="h-10 w-10 rounded-full bg-blue-200 flex items-center justify-center shrink-0 text-sm font-bold text-blue-700">
+                  AB
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm text-slate-900">ABC Technologies</p>
+                  <p className="text-xs text-slate-600 truncate">Interested in your React skills...</p>
+                  <p className="text-xs text-slate-500 mt-1">2 hours ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition cursor-pointer">
+                <div className="h-10 w-10 rounded-full bg-indigo-200 flex items-center justify-center shrink-0 text-sm font-bold text-indigo-700">
+                  PL
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm text-slate-900">Pixel Labs</p>
+                  <p className="text-xs text-slate-600 truncate">Your profile matches our opening...</p>
+                  <p className="text-xs text-slate-500 mt-1">5 hours ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition cursor-pointer">
+                <div className="h-10 w-10 rounded-full bg-green-200 flex items-center justify-center shrink-0 text-sm font-bold text-green-700">
+                  TM
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm text-slate-900">TechMart Solutions</p>
+                  <p className="text-xs text-slate-600 truncate">Interview scheduled for next week</p>
+                  <p className="text-xs text-slate-500 mt-1">1 day ago</p>
+                </div>
+              </div>
+            </div>
+            <button
+              className="mt-4 text-sm font-bold text-blue-700 hover:text-blue-900"
+              type="button"
+            >
+              View all messages
+            </button>
+          </article>
         </section>
 
         <section className="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
@@ -124,7 +216,7 @@ function ApplicantDashboard() {
               <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Tracking</p>
               <h2 className="mt-1 text-xl font-bold">Recent Applications</h2>
             </div>
-            <button className="text-sm font-bold text-blue-700" onClick={() => navigate("/applicant/jobDetails")} type="button">
+            <button className="text-sm font-bold text-blue-700" onClick={() => navigate("/applicant/tracker")} type="button">
               View details
             </button>
           </div>
@@ -189,6 +281,145 @@ function ApplicantDashboard() {
           </div>
         </section>
       </main>
+
+      {/* Professional Footer */}
+      <footer className="bg-white border-t border-slate-200 mt-12">
+        {/* Newsletter Section */}
+        <div className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8">
+            <div className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 shadow-md">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-white">Never Miss a Job Opportunity</h3>
+                  <p className="mt-2 text-blue-100">Get personalized job recommendations delivered to your inbox</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <input
+                    type="email"
+                    placeholder="Your email"
+                    className="rounded-lg border-0 bg-white px-5 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full md:w-56"
+                  />
+                  <button
+                    className="whitespace-nowrap rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800 transition"
+                    type="button"
+                  >
+                    Subscribe
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Footer Content */}
+        <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5 mb-10">
+            {/* About Section */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">A</div>
+                <span className="font-bold text-slate-900 text-lg">ATS Pro</span>
+              </div>
+              <p className="text-sm leading-6 text-slate-600 mb-5">
+                The premier career platform connecting talented professionals with their dream jobs at leading companies worldwide.
+              </p>
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Follow us</p>
+              <div className="flex gap-4">
+                <a href="#" className="text-slate-600 hover:text-blue-600 transition font-semibold text-sm">Facebook</a>
+                <a href="#" className="text-slate-600 hover:text-blue-600 transition font-semibold text-sm">LinkedIn</a>
+                <a href="#" className="text-slate-600 hover:text-blue-600 transition font-semibold text-sm">Twitter</a>
+              </div>
+            </div>
+
+            {/* For Job Seekers */}
+            <div>
+              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">For Job Seekers</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Browse Jobs</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">My Applications</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Saved Jobs</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Career Advice</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Salary Guide</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Interview Tips</a></li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">Resources</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Blog</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Resume Builder</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Skill Assessment</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Company Reviews</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Market Trends</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Help Center</a></li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">Company</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">About Us</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Careers</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Press & Media</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Partnerships</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Investor Relations</a></li>
+                <li><a href="#" className="text-slate-600 hover:text-blue-600 transition text-sm">Contact</a></li>
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div>
+              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">Contact Us</h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Email</p>
+                  <a href="mailto:support@atspro.in" className="text-slate-600 hover:text-blue-600 transition text-sm">
+                    support@atspro.in
+                  </a>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Phone</p>
+                  <a href="tel:+919876543210" className="text-slate-600 hover:text-blue-600 transition text-sm">
+                    +91 9876 543 210
+                  </a>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Office</p>
+                  <p className="text-slate-600 text-sm">
+                    Bangalore, Karnataka<br/>India
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-slate-200 pt-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm text-slate-600">
+                © 2026 ATS Pro. All rights reserved.
+              </p>
+              <div className="flex flex-wrap gap-6">
+                <a href="#" className="text-sm text-slate-600 hover:text-blue-600 transition font-medium">
+                  Privacy Policy
+                </a>
+                <a href="#" className="text-sm text-slate-600 hover:text-blue-600 transition font-medium">
+                  Terms of Service
+                </a>
+                <a href="#" className="text-sm text-slate-600 hover:text-blue-600 transition font-medium">
+                  Cookie Policy
+                </a>
+                <a href="#" className="text-sm text-slate-600 hover:text-blue-600 transition font-medium">
+                  Accessibility
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -14,7 +14,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const navigationItems = [
   { label: "Dashboard", path: "/applicant/dashboard", icon: HomeIcon },
   { label: "Find Jobs", path: "/applicant/joblisting", icon: BriefcaseIcon },
-  { label: "Tracking", path: "/applicant/jobDetails", icon: ChartBarSquareIcon },
+  { label: "Tracking", path: "/applicant/tracker", icon: ChartBarSquareIcon },
   { label: "Resume", path: "/applicant/resumeupload", icon: DocumentArrowUpIcon },
   { label: "Profile", path: "/applicant/profile", icon: UserCircleIcon },
 ];

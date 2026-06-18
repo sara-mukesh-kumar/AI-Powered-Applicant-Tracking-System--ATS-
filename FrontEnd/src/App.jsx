@@ -27,9 +27,11 @@ import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
 // Using ApplicantDashboard as a wrapper might break your UI if it doesn't have an <Outlet />
 import ApplicantDashboard from "./components/Applicant/ApplicantDashboard";
 import ApplicantProfile from "./components/Applicant/ApplicantProfile";
+import ApplicationTracker from "./components/Applicant/ApplicationTracker";
 import JobDetails from "./components/Applicant/JobDetails";
 import JobListings from "./components/Applicant/JobListings";
 import ResumeUpload from "./components/Applicant/ResumeUpload";
+import SavedJobs from "./components/Applicant/SavedJobs";
 
 // ==========================================
 // ROLE-BASED PROTECTED ROUTE COMPONENT
@@ -110,7 +112,9 @@ function App() {
           <Route path="profile" element={<ApplicantProfile />} />
           <Route path="joblisting" element={<JobListings />} />
           <Route path="jobDetails" element={<JobDetails />} />
+          <Route path="tracker" element={<ApplicationTracker />} />
           <Route path="resumeupload" element={<ResumeUpload />} />
+          <Route path="savedjobs" element={<SavedJobs />} />
         </Route>
 
         </Routes>
