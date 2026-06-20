@@ -7,52 +7,65 @@ const menuItems = [
   { label: "Applications", path: "/admin/applications", icon: "📋" },
 ];
 
-export default function AdminSidebar() {
+// closeMobileMenu prop ko pass-through kiya layout drawer toggling ke liye
+export default function AdminSidebar({ closeMobileMenu }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/admin/login");
+    if (window.confirm("Are you sure you want to log out from the Admin Panel?")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      
+      // Agar mobile menu khula hai toh band karo
+      if (closeMobileMenu) closeMobileMenu();
+      
+      navigate("/");
+    }
   };
 
   return (
-    <div className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-y-auto bg-gray-900 text-white">
+    <div className="flex h-full w-full flex-col overflow-y-auto bg-gray-950 text-white select-none shadow-xl md:sticky md:top-0 md:h-screen md:w-64 border-r border-gray-850">
 
-      {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-700">
-        <h1 className="text-xl font-bold text-blue-400">ATS Admin</h1>
-        <p className="text-xs text-gray-400 mt-1">Admin Panel</p>
+      {/* Brand Logo Header */}
+      <div className="px-6 py-5 border-b border-gray-850/60 bg-gray-900/20">
+        <h1 className="text-xl font-bold text-blue-400 tracking-tight flex items-center gap-2">
+          <span>🤖</span> ATS Admin
+        </h1>
+        <p className="text-[10px] uppercase font-bold text-gray-500 tracking-widest mt-1">
+          Management Panel
+        </p>
       </div>
 
-      {/* Menu Items */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      {/* Interactive Navigation Link Items Matrix */}
+      <nav className="flex-1 px-4 py-6 space-y-1.5">
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
+            // Link click hote hi mobile menu close karne ka checker hook callback trigger
+            onClick={() => closeMobileMenu && closeMobileMenu()}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition
+              `flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 transform outline-none
               ${isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/15 font-bold scale-102"
+                : "text-gray-400 hover:bg-gray-900/60 hover:text-white hover:translate-x-1 hover:scale-101"
               }`
             }
           >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
+            <span className="text-base filter drop-shadow-sm">{item.icon}</span>
+            <span className="tracking-wide">{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
-      {/* Logout Button */}
-      <div className="px-4 py-5 border-t border-gray-700">
+      {/* Sidebar Footer Log Out Action Block */}
+      <div className="px-4 py-5 border-t border-gray-850/60 bg-gray-900/10">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-gray-700 transition"
+          className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-transparent hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 transition-all duration-200 cursor-pointer outline-none"
         >
-          <span>🚪</span>
-          <span>Logout</span>
+          <span className="text-base">🚪</span>
+          <span className="tracking-wide">Logout</span>
         </button>
       </div>
 

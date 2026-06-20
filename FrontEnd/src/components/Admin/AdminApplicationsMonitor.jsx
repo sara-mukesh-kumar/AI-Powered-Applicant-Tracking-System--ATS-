@@ -31,11 +31,11 @@ export default function ApplicationsMonitor() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   // --- ADVANCED AI FILTERS STATE ---
-  const [minAiScore, setMinAiScore] = useState(0); // Range Slider State
-  const [skillSearch, setSkillSearch] = useState(""); // Skill Input State
+  const [minAiScore, setMinAiScore] = useState(0); 
+  const [skillSearch, setSkillSearch] = useState(""); 
   
   // --- AI MODAL STATE ---
-  const [selectedApp, setSelectedApp] = useState(null); // Kis application ka summary khulega
+  const [selectedApp, setSelectedApp] = useState(null); 
 
   const fetchApplications = async () => {
     try {
@@ -89,7 +89,6 @@ export default function ApplicationsMonitor() {
     const appStatus = app.status || "Applied";
     const aiScore = app.aiScore || 0;
     
-    // Skill array parsing (Database standard check)
     const extractedSkills = app.extractedSkills || []; 
 
     const matchSearch =
@@ -100,10 +99,8 @@ export default function ApplicationsMonitor() {
     const matchStatus = 
       statusFilter === "all" || appStatus.toLowerCase() === statusFilter.toLowerCase();
 
-    // 1. AI Score Slider Match Condition
     const matchAiScore = aiScore >= minAiScore;
 
-    // 2. AI Extracted Skills Target Substring Match
     const matchSkills = 
       skillSearch.trim() === "" || 
       extractedSkills.some(skill => skill.toLowerCase().includes(skillSearch.toLowerCase()));
@@ -112,7 +109,11 @@ export default function ApplicationsMonitor() {
   });
 
   if (loading) {
-    return <div className="text-center py-10 text-gray-500 font-medium">Loading applications...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-400 text-base sm:text-lg font-medium">Loading applications...</p>
+      </div>
+    );
   }
 
   if (error) {
@@ -121,16 +122,16 @@ export default function ApplicationsMonitor() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Responsive Header Typography */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-800">Applications Monitor</h2>
-        <p className="text-gray-500 text-sm mt-1">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Applications Monitor</h2>
+        <p className="text-gray-500 text-xs sm:text-sm mt-1">
           Track and monitor all system applications with live AI scores and deep resume parsed insights
         </p>
       </div>
 
-      {/* --- ADVANCED AI FILTER PANEL --- */}
-      <div className="bg-white rounded-2xl shadow p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      {/* --- RESPONSIVE ADVANCED AI FILTER PANEL --- */}
+      <div className="bg-white rounded-2xl shadow p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
         {/* Basic Global Search */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-gray-600 block">Search Candidate / Job</label>
@@ -159,7 +160,7 @@ export default function ApplicationsMonitor() {
           </select>
         </div>
 
-        {/* NEW: AI Extracted Skill Target Filter */}
+        {/* AI Extracted Skill Target Filter */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-purple-700 flex items-center gap-1">
             🤖 Filter by Extracted Skill
@@ -173,7 +174,7 @@ export default function ApplicationsMonitor() {
           />
         </div>
 
-        {/* NEW: AI Score Ranger Slider Component */}
+        {/* AI Score Ranger Slider Component */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs font-semibold text-blue-700">
             <span className="flex items-center gap-1">⚡ Minimum AI Score</span>
@@ -185,7 +186,7 @@ export default function ApplicationsMonitor() {
               type="range"
               min="0"
               max="100"
-              className="w-full accent-blue-600 h-2 bg-gray-200 rounded-lg cursor-pointer"
+              className="w-full accent-blue-600 h-2 bg-gray-200 rounded-lg cursor-pointer flex-1"
               value={minAiScore}
               onChange={(e) => setMinAiScore(Number(e.target.value))}
             />
@@ -198,8 +199,8 @@ export default function ApplicationsMonitor() {
         Showing {filteredApps.length} of {applications.length} applications
       </div>
 
-      {/* Table Layer */}
-      <div className="overflow-x-auto rounded-2xl bg-white shadow">
+      {/* Table Layer Isolated Horizontal Scroll Container */}
+      <div className="overflow-x-auto rounded-2xl bg-white shadow w-full">
         <table className="min-w-[1150px] w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
@@ -208,7 +209,7 @@ export default function ApplicationsMonitor() {
               <th className="px-6 py-4 text-left">Company</th>
               <th className="px-6 py-4 text-left">AI Match Score</th>
               <th className="px-6 py-4 text-left">Status</th>
-              <th className="px-6 py-4 text-left">Insights</th> {/* AI Actions Trigger Header */}
+              <th className="px-6 py-4 text-left">Insights</th> 
               <th className="px-6 py-4 text-left">Actions</th>
             </tr>
           </thead>
@@ -222,25 +223,25 @@ export default function ApplicationsMonitor() {
             ) : (
               filteredApps.map((app) => (
                 <tr key={app._id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs uppercase">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
                         {(app.applicantId?.name || "U").charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">{app.applicantId?.name || "Unknown User"}</p>
-                        <p className="text-xs text-gray-400">{app.applicantId?.email || "N/A"}</p>
+                        <p className="font-medium text-gray-800 truncate max-w-[140px] sm:max-w-none">{app.applicantId?.name || "Unknown User"}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-[140px] sm:max-w-none">{app.applicantId?.email || "N/A"}</p>
                       </div>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 font-medium text-gray-700">
+                  <td className="px-6 py-4 font-medium text-gray-700 truncate max-w-[180px] sm:max-w-none">
                     {app.jobId?.title || "Deleted Job Position"}
                   </td>
 
-                  <td className="px-6 py-4 text-gray-500">{app.jobId?.company || "N/A"}</td>
+                  <td className="px-6 py-4 text-gray-500 truncate max-w-[140px] sm:max-w-none">{app.jobId?.company || "N/A"}</td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${aiScoreBg(app.aiScore || 0)}`}>
                       <span>🤖</span>
                       <span className={aiScoreColor(app.aiScore || 0)}>
@@ -249,26 +250,25 @@ export default function ApplicationsMonitor() {
                     </div>
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(app.status)}`}>
                       {app.status || "Applied"}
                     </span>
                   </td>
 
-                  {/* NEW: AI Summary Modal Activator Action */}
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={() => setSelectedApp(app)}
-                      className="cursor-pointer inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-purple-100 transition"
+                      className="cursor-pointer inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-purple-100 transition shadow-sm"
                     >
                       ✨ View AI Insights
                     </button>
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={() => handleDelete(app._id)}
-                      className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"
+                      className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition shadow-sm"
                     >
                       Delete
                     </button>
@@ -280,15 +280,15 @@ export default function ApplicationsMonitor() {
         </table>
       </div>
 
-      {/* --- PREMIUM AI INSIGHTS MODAL COMPONENT --- */}
+      {/* --- RESPONSIVE PREMIUM AI INSIGHTS MODAL --- */}
       {selectedApp && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-gray-100 transform scale-100 transition-all">
+          <div className="bg-white rounded-2xl max-w-md sm:max-w-lg w-full p-5 sm:p-6 shadow-2xl relative border border-gray-100 transform scale-100 transition-all max-h-[90vh] overflow-y-auto">
             
             {/* Modal Head */}
             <div className="flex justify-between items-start border-b border-gray-100 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
                   <span>🤖</span> AI Evaluation Summary
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -306,9 +306,9 @@ export default function ApplicationsMonitor() {
             {/* Modal Body Container */}
             <div className="mt-4 space-y-4">
               {/* Match Score Indicator Row */}
-              <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <span className="text-sm font-medium text-gray-700">Calculated Job Suitability:</span>
-                <span className={`px-3 py-1 rounded-full font-extrabold text-sm ${aiScoreBg(selectedApp.aiScore || 0)} ${aiScoreColor(selectedApp.aiScore || 0)}`}>
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs sm:text-sm">
+                <span className="font-medium text-gray-700">Calculated Job Suitability:</span>
+                <span className={`px-2.5 py-1 rounded-full font-extrabold text-xs sm:text-sm ${aiScoreBg(selectedApp.aiScore || 0)} ${aiScoreColor(selectedApp.aiScore || 0)}`}>
                   {selectedApp.aiScore || 0}% Match
                 </span>
               </div>
@@ -319,7 +319,7 @@ export default function ApplicationsMonitor() {
                 <div className="flex flex-wrap gap-1.5">
                   {selectedApp.extractedSkills && selectedApp.extractedSkills.length > 0 ? (
                     selectedApp.extractedSkills.map((skill, index) => (
-                      <span key={index} className="bg-purple-50 text-purple-700 border border-purple-100 px-2.5 py-0.5 rounded-md text-xs font-medium">
+                      <span key={index} className="bg-purple-50 text-purple-700 border border-purple-100 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap">
                         {skill}
                       </span>
                     ))
@@ -332,7 +332,7 @@ export default function ApplicationsMonitor() {
               {/* Core Context AI Summary Block */}
               <div className="space-y-1.5">
                 <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Fitment Analysis Summary:</h4>
-                <div className="bg-purple-50/50 border border-purple-100/70 rounded-xl p-3.5 text-sm text-gray-700 leading-relaxed max-h-48 overflow-y-auto">
+                <div className="bg-purple-50/50 border border-purple-100/70 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm text-gray-700 leading-relaxed max-h-40 sm:max-h-48 overflow-y-auto">
                   {selectedApp.aiSummary || "AI Parsing engine results for this record will generate automatically once the candidate's core document pipeline completes execution."}
                 </div>
               </div>
@@ -342,7 +342,7 @@ export default function ApplicationsMonitor() {
             <div className="mt-6 text-right">
               <button
                 onClick={() => setSelectedApp(null)}
-                className="cursor-pointer bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-800 transition shadow"
+                className="cursor-pointer bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-800 transition shadow w-full sm:w-auto"
               >
                 Close Insights
               </button>
