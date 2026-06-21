@@ -12,6 +12,7 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminUserManagement from "./components/Admin/AdminUserManagement";
 import AdminJobsOverview from "./components/Admin/AdminJobsOverview";
 import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonitor";
+import AdminBroadcast from "./components/Admin/AdminBroadcast";
 
 // Recruiter Components
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
@@ -80,6 +81,7 @@ function App() {
           <Route path="jobs" element={<AdminJobsOverview />} />
           <Route path="applications" element={<AdminApplicationsMonitor />} />
           <Route path="users" element={<AdminUserManagement />} />
+          <Route path="broadcast" element={<AdminBroadcast />} />
         </Route>
 
         {/* ================= RECRUITER ROUTES ================= */}

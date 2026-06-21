@@ -5,6 +5,7 @@ const menuItems = [
   { label: "User Management", path: "/admin/users", icon: "👥" },
   { label: "Jobs Overview", path: "/admin/jobs", icon: "💼" },
   { label: "Applications", path: "/admin/applications", icon: "📋" },
+  { label: "System Broadcast", path: "/admin/broadcast", icon: "📢" }, // 👈 ADD THIS LINE
 ];
 
 // closeMobileMenu prop ko pass-through kiya layout drawer toggling ke liye

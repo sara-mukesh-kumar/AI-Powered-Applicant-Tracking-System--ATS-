@@ -1,7 +1,8 @@
 import express from "express";
 import User from "../models/User.js";
 import Job from "../models/Job.js";
-import Application from "../models/application.js"; // Application model imported successfully
+import Application from "../models/application.js"; 
+import Broadcast from "../models/Broadcast.js"; // 1. Broadcast model ko import kiya
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -15,7 +16,7 @@ router.get("/stats", async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalRecruiters = await User.countDocuments({ role: "recruiter" });
     const totalApplicants = await User.countDocuments({ role: "applicant" });
-    const totalApplications = await Application.countDocuments(); // Real active application counter
+    const totalApplications = await Application.countDocuments(); 
 
     res.json({
       totalJobs,
@@ -113,12 +114,10 @@ router.get("/applications", async (req, res) => {
     const { score, status } = req.query;
     let queryCondition = {};
 
-    // 1. Pipeline status checking validation filter
     if (status && status !== "all") {
       queryCondition.status = status;
     }
 
-    // 2. Week 3 AI score-based mathematical matching filter
     if (score && score !== "all") {
       if (score === "high") {
         queryCondition["aiAnalysis.aiScore"] = { $gte: 80 };
@@ -148,6 +147,56 @@ router.delete("/applications/:id", async (req, res) => {
     res.json({ message: "Application deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+
+// ========================================================
+// 📢 --- NEW: WEEK 4 ADVANCED BROADCAST ENDPOINTS ---
+// ========================================================
+
+// ⚡ POST /api/admin/broadcast — Push a new system announcement banner
+router.post("/broadcast", async (req, res) => {
+  try {
+    const { message, targetGroup } = req.body;
+
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ message: "Broadcast message is required" });
+    }
+
+    const newBroadcast = new Broadcast({
+      message,
+      targetGroup: targetGroup || "all",
+      senderId: req.user._id, // protect middleware se logged-in admin ki id extract ho jayegi
+    });
+
+    await newBroadcast.save();
+    res.status(201).json({ success: true, broadcast: newBroadcast });
+  } catch (error) {
+    res.status(500).json({ message: "Server error while creating broadcast", error: error.message });
+  }
+});
+
+// ⚡ GET /api/admin/broadcasts — Pull full announcements history log
+router.get("/broadcasts", async (req, res) => {
+  try {
+    const broadcasts = await Broadcast.find()
+      .populate("senderId", "name email")
+      .sort({ createdAt: -1 }); // Nayi warnings sabse upar dikhengi
+    res.json(broadcasts);
+  } catch (error) {
+    res.status(500).json({ message: "Server error while fetching history", error: error.message });
+  }
+});
+
+// ⚡ DELETE /api/admin/broadcast/:id — Purge expired/old warning notification
+router.delete("/broadcast/:id", async (req, res) => {
+  try {
+    const broadcast = await Broadcast.findByIdAndDelete(req.params.id);
+    if (!broadcast) return res.status(404).json({ message: "Broadcast warning log not found" });
+    res.json({ message: "Broadcast deleted successfully from server logs" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error while deleting broadcast", error: error.message });
   }
 });
 
