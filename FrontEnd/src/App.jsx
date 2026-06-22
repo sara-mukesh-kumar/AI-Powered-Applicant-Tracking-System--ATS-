@@ -33,6 +33,9 @@ import JobDetails from "./components/Applicant/JobDetails";
 import JobListings from "./components/Applicant/JobListings";
 import ResumeUpload from "./components/Applicant/ResumeUpload";
 import SavedJobs from "./components/Applicant/SavedJobs";
+import ApplicantLayout from "./components/Applicant/ApplicantLayout";
+
+
 
 // ==========================================
 // ROLE-BASED PROTECTED ROUTE COMPONENT
@@ -68,8 +71,8 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         {/* ================= ADMIN ROUTES ================= */}
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminLayout />
@@ -85,11 +88,11 @@ function App() {
         </Route>
 
         {/* ================= RECRUITER ROUTES ================= */}
-        <Route 
-          path="/recruiter" 
+        <Route
+          path="/recruiter"
           element={
             <ProtectedRoute allowedRoles={["recruiter"]}>
-              <RecruiterDashboard />
+              <RecruiterLayout />
             </ProtectedRoute>
           }
         >
@@ -99,13 +102,11 @@ function App() {
         </Route>
 
         {/* ================= APPLICANT ROUTES ================= */}
-        {/* Make sure your ApplicantDashboard component has an <Outlet /> inside it, 
-            otherwise the nested routes (profile, jobDetails) will not show up! */}
-        <Route 
-          path="/applicant" 
+        <Route
+          path="/applicant"
           element={
             <ProtectedRoute allowedRoles={["applicant"]}>
-              <Outlet />
+              <ApplicantLayout />
             </ProtectedRoute>
           }
         >
@@ -119,8 +120,8 @@ function App() {
           <Route path="savedjobs" element={<SavedJobs />} />
         </Route>
 
-        </Routes>
-      </BrowserRouter>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

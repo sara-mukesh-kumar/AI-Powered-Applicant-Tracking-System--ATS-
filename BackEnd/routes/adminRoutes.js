@@ -2,16 +2,13 @@ import express from "express";
 import User from "../models/User.js";
 import Job from "../models/Job.js";
 import Application from "../models/application.js"; 
-import Broadcast from "../models/Broadcast.js"; // 1. Broadcast model ko import kiya
+import Broadcast from "../models/Broadcast.js"; 
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Sab routes admin only hain
-router.use(protect, authorize("admin"));
-
-// 📊 GET /api/admin/stats — Dashboard Analytics System Overview
-router.get("/stats", async (req, res) => {
+// 📊 GET /api/admin/stats — Dashboard Analytics System Overview (Admin Only)
+router.get("/stats", protect, authorize("admin"), async (req, res) => {
   try {
     const totalJobs = await Job.countDocuments();
     const totalRecruiters = await User.countDocuments({ role: "recruiter" });
@@ -29,8 +26,8 @@ router.get("/stats", async (req, res) => {
   }
 });
 
-// 👥 GET /api/admin/users — Sab users fetch karne ke liye
-router.get("/users", async (req, res) => {
+// 👥 GET /api/admin/users — Sab users fetch karne ke liye (Admin Only)
+router.get("/users", protect, authorize("admin"), async (req, res) => {
   try {
     const users = await User.find({ role: { $ne: "admin" } })
       .select("-password")
@@ -41,8 +38,8 @@ router.get("/users", async (req, res) => {
   }
 });
 
-// 🔧 PATCH /api/admin/users/:id/status — User system-access controller
-router.patch("/users/:id/status", async (req, res) => {
+// 🔧 PATCH /api/admin/users/:id/status (Admin Only)
+router.patch("/users/:id/status", protect, authorize("admin"), async (req, res) => {
   try {
     const { status } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -58,8 +55,8 @@ router.patch("/users/:id/status", async (req, res) => {
   }
 });
 
-// 🗑️ DELETE /api/admin/users/:id — Permanent user ban
-router.delete("/users/:id", async (req, res) => {
+// 🗑️ DELETE /api/admin/users/:id (Admin Only)
+router.delete("/users/:id", protect, authorize("admin"), async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -69,8 +66,8 @@ router.delete("/users/:id", async (req, res) => {
   }
 });
 
-// 💼 GET /api/admin/jobs — Sab posted positions ki monitor list
-router.get("/jobs", async (req, res) => {
+// 💼 GET /api/admin/jobs (Admin Only)
+router.get("/jobs", protect, authorize("admin"), async (req, res) => {
   try {
     const jobs = await Job.find()
       .populate("recruiterId", "name email")
@@ -81,8 +78,8 @@ router.get("/jobs", async (req, res) => {
   }
 });
 
-// 🛡️ PATCH /api/admin/jobs/:id/status — Job audit moderations
-router.patch("/jobs/:id/status", async (req, res) => {
+// 🛡️ PATCH /api/admin/jobs/:id/status (Admin Only)
+router.patch("/jobs/:id/status", protect, authorize("admin"), async (req, res) => {
   try {
     const { status } = req.body;
     const job = await Job.findByIdAndUpdate(
@@ -97,8 +94,8 @@ router.patch("/jobs/:id/status", async (req, res) => {
   }
 });
 
-// 🗑️ DELETE /api/admin/jobs/:id — Spammers jobs cleanup endpoint
-router.delete("/jobs/:id", async (req, res) => {
+// 🗑️ DELETE /api/admin/jobs/:id (Admin Only)
+router.delete("/jobs/:id", protect, authorize("admin"), async (req, res) => {
   try {
     const job = await Job.findByIdAndDelete(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
@@ -108,8 +105,8 @@ router.delete("/jobs/:id", async (req, res) => {
   }
 });
 
-// 🤖 GET /api/admin/applications — Week 3 AI and Pipeline Query Metrics
-router.get("/applications", async (req, res) => {
+// 🤖 GET /api/admin/applications (Admin Only)
+router.get("/applications", protect, authorize("admin"), async (req, res) => {
   try {
     const { score, status } = req.query;
     let queryCondition = {};
@@ -139,8 +136,8 @@ router.get("/applications", async (req, res) => {
   }
 });
 
-// 🗑️ DELETE /api/admin/applications/:id — Purge submission entry log
-router.delete("/applications/:id", async (req, res) => {
+// 🗑️ DELETE /api/admin/applications/:id (Admin Only)
+router.delete("/applications/:id", protect, authorize("admin"), async (req, res) => {
   try {
     const application = await Application.findByIdAndDelete(req.params.id);
     if (!application) return res.status(404).json({ message: "Application not found" });
@@ -152,11 +149,11 @@ router.delete("/applications/:id", async (req, res) => {
 
 
 // ========================================================
-// 📢 --- NEW: WEEK 4 ADVANCED BROADCAST ENDPOINTS ---
+// 📢 --- BROADCAST ENDPOINTS ---
 // ========================================================
 
-// ⚡ POST /api/admin/broadcast — Push a new system announcement banner
-router.post("/broadcast", async (req, res) => {
+// ⚡ POST /api/admin/broadcast — Only Admin can deploy
+router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
   try {
     const { message, targetGroup } = req.body;
 
@@ -167,7 +164,7 @@ router.post("/broadcast", async (req, res) => {
     const newBroadcast = new Broadcast({
       message,
       targetGroup: targetGroup || "all",
-      senderId: req.user._id, // protect middleware se logged-in admin ki id extract ho jayegi
+      senderId: req.user._id,
     });
 
     await newBroadcast.save();
@@ -177,20 +174,21 @@ router.post("/broadcast", async (req, res) => {
   }
 });
 
-// ⚡ GET /api/admin/broadcasts — Pull full announcements history log
-router.get("/broadcasts", async (req, res) => {
+// ⚡ GET /api/admin/broadcasts — PUBLIC FOR RECRUITER & APPLICANT ALSO!
+router.get("/broadcasts", protect, async (req, res) => {
   try {
     const broadcasts = await Broadcast.find()
       .populate("senderId", "name email")
-      .sort({ createdAt: -1 }); // Nayi warnings sabse upar dikhengi
-    res.json(broadcasts);
+      .sort({ createdAt: -1 });
+    
+    res.json({ success: true, broadcasts });
   } catch (error) {
     res.status(500).json({ message: "Server error while fetching history", error: error.message });
   }
 });
 
-// ⚡ DELETE /api/admin/broadcast/:id — Purge expired/old warning notification
-router.delete("/broadcast/:id", async (req, res) => {
+// ⚡ DELETE /api/admin/broadcast/:id — Only Admin can purge log
+router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) => {
   try {
     const broadcast = await Broadcast.findByIdAndDelete(req.params.id);
     if (!broadcast) return res.status(404).json({ message: "Broadcast warning log not found" });

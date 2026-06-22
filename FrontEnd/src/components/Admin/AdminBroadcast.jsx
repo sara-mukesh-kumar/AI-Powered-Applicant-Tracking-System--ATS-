@@ -20,7 +20,13 @@ export default function AdminBroadcast() {
       });
       if (!res.ok) throw new Error("History load nahi ho saki");
       const data = await res.json();
-      setBroadcasts(data);
+      
+      // Data format matching check
+      if (data.success) {
+        setBroadcasts(data.broadcasts);
+      } else {
+        setBroadcasts(data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
