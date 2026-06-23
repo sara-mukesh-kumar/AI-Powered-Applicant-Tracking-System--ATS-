@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import ApplicantNavbar from "./ApplicantNavbar";
 
 const applications = [
   {
@@ -70,14 +69,7 @@ function ApplicationTracker() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <ApplicantNavbar
-        section="Applicant Portal"
-        title="Application Tracker"
-        description="Follow every application from submission to decision."
-      />
-
-      <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+    <div className="text-slate-900">
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
           {summary.map(([value, label, textColor, background]) => (
             <article className="rounded-2xl bg-white p-5 shadow-sm" key={label}>
@@ -156,7 +148,6 @@ function ApplicationTracker() {
             </div>
           )}
         </section>
-      </main>
     </div>
   );
 }

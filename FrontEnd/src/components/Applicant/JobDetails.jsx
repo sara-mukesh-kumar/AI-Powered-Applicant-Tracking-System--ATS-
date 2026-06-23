@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ApplicantApplicationModal from "./ApplicantApplyJob";
-import ApplicantNavbar from "./ApplicantNavbar";
 
 const job = {
   title: "MERN Stack Developer",
@@ -50,14 +49,7 @@ function JobDetails() {
   const [applicationOpen, setApplicationOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <ApplicantNavbar
-        section="Applicant Portal"
-        title="Job Details"
-        description="Review the role, requirements, and match details before applying."
-      />
-
-      <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+    <div className="text-slate-900">
         <button
           className="mb-5 text-sm font-bold text-blue-700 transition hover:text-blue-900"
           onClick={() => navigate("/applicant/joblisting")}
@@ -136,7 +128,6 @@ function JobDetails() {
             </section>
           </aside>
         </div>
-      </main>
       {applicationOpen && (
         <ApplicantApplicationModal job={job} onClose={() => setApplicationOpen(false)} />
       )}

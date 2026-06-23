@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ApplicantNavbar from "./ApplicantNavbar";
 
 const initialSavedJobs = [
   {
@@ -51,14 +50,7 @@ function SavedJobs() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <ApplicantNavbar
-        section="Applicant Portal"
-        title="Saved Jobs"
-        description="Review bookmarked roles and apply when you are ready."
-      />
-
-      <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+    <div className="text-slate-900">
         <section className="mb-6 rounded-2xl bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
@@ -144,7 +136,6 @@ function SavedJobs() {
             </button>
           </section>
         )}
-      </main>
     </div>
   );
 }

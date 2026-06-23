@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import ApplicantApplicationModal from "./ApplicantApplyJob";
-import ApplicantNavbar from "./ApplicantNavbar";
 
 const filters = ["All", "Entry-Level", "Mid-Level", "Senior-Level", "Lead/Manager"];
 
@@ -86,14 +85,7 @@ function JobListings() {
   }, [activeFilter, jobs, search]);
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <ApplicantNavbar
-        section="Applicant Portal"
-        title="Find Jobs"
-        description="Discover roles that match your experience, skills, and preferences."
-      />
-
-      <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+    <div className="text-slate-900">
         <section className="mb-8 rounded-2xl bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <label className="text-sm font-bold text-slate-700" htmlFor="job-search">
@@ -231,7 +223,6 @@ function JobListings() {
             </div>
           )}
         </section>
-      </main>
       {selectedJob && (
         <ApplicantApplicationModal job={selectedJob} onClose={() => setSelectedJob(null)} />
       )}

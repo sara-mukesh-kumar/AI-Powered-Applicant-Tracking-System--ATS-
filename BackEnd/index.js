@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import dns from "node:dns";
 import jobRoutes from "./routes/jobRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import applicantRoutes from "./routes/applicantRoutes.js";
 
 dotenv.config();
 console.log(process.env.MONGO_URI);
@@ -26,9 +27,11 @@ mongoose
   });
 
 // Routes
+app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes); 
 app.use("/api/admin", adminRoutes);
+app.use("/api/applicant", applicantRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

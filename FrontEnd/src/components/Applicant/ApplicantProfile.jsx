@@ -1,5 +1,4 @@
 import { useState } from "react";
-import ApplicantNavbar from "./ApplicantNavbar";
 
 const skills = ["React", "JavaScript", "Node.js", "MongoDB", "Tailwind CSS"];
 
@@ -80,14 +79,8 @@ function ApplicantProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <ApplicantNavbar
-        section="Applicant Portal"
-        title="My Profile"
-        description="Keep your information current so recruiters see your strongest profile."
-      />
-
-      <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+    <div className="text-slate-900">
+      <div className="mx-auto max-w-7xl">
         <section className="relative mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
           <div className="h-36 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900" />
           <div className="absolute right-6 top-6 rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white backdrop-blur">
@@ -243,7 +236,7 @@ function ApplicantProfile() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

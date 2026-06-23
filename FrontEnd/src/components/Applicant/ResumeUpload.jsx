@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import ApplicantNavbar from "./ApplicantNavbar";
 
 function ResumeUpload() {
   const inputRef = useRef(null);
@@ -11,14 +10,7 @@ function ResumeUpload() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <ApplicantNavbar
-        section="Applicant Portal"
-        title="Resume"
-        description="Upload a clear, current resume to improve your job matches."
-      />
-
-      <main className="mx-auto max-w-4xl px-5 py-8 lg:px-8">
+    <div className="text-slate-900 max-w-4xl mx-auto">
         <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-6">
             <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Document</p>
@@ -76,7 +68,6 @@ function ResumeUpload() {
             </article>
           ))}
         </section>
-      </main>
     </div>
   );
 }

@@ -19,6 +19,36 @@ const userSchema = new mongoose.Schema(
     // Optional profile info for applicants
     skills: [{ type: String }],
     resumeUrl: { type: String }, // General profile resume
+    designation: { type: String, default: "Applicant" },
+    location: { type: String, default: "" },
+    summary: { type: String, default: "" },
+    experience: [{
+      company: { type: String },
+      title: { type: String },
+      duration: { type: String },
+      description: { type: String }
+    }],
+    education: [{
+      degree: { type: String },
+      school: { type: String },
+      duration: { type: String }
+    }],
+    savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
+    privacy: {
+      openToWork: { type: Boolean, default: true },
+      visibility: { type: String, enum: ["public", "verified", "private"], default: "public" },
+      blockedCompanies: [{ type: String }]
+    },
+    alerts: [{
+      keywords: { type: String },
+      location: { type: String },
+      frequency: { type: String }
+    }],
+    documents: [{
+      name: { type: String },
+      url: { type: String },
+      category: { type: String, enum: ["resume", "cover_letter", "portfolio", "id"], default: "resume" }
+    }],
   },
   { timestamps: true }
 );
