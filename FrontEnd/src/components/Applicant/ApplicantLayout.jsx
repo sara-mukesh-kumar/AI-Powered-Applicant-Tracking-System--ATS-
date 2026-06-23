@@ -15,7 +15,7 @@ import {
   ChevronRightIcon,
   ArrowRightOnRectangleIcon
 } from "@heroicons/react/24/outline";
-import ApplicantNotificationBanner from "./ApplicantNotificationBanner";
+import NotificationBanner from "../NotificationBanner";
 
 const ApplicantLayout = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -282,7 +282,8 @@ const ApplicantLayout = () => {
 
         {/* Main Content Body */}
         <main className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-8 scrollbar-thin">
-          <ApplicantNotificationBanner />
+          {/* ✅ Sahi generic reusable filter tag call karo */}
+          <NotificationBanner />
           <Outlet />
         </main>
 

@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Job from "../models/Job.js";
 import Application from "../models/application.js"; 
 import Broadcast from "../models/Broadcast.js"; 
+import AuditLog from "../models/AuditLog.js"; // Standard import ready
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -49,6 +50,16 @@ router.patch("/users/:id/status", protect, authorize("admin"), async (req, res) 
     ).select("-password");
 
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "USER_STATUS_UPDATE",
+      details: `Modified user status to [${status}] for ${user.name || "User"} (${user.email})`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -58,8 +69,20 @@ router.patch("/users/:id/status", protect, authorize("admin"), async (req, res) 
 // 🗑️ DELETE /api/admin/users/:id (Admin Only)
 router.delete("/users/:id", protect, authorize("admin"), async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    await User.findByIdAndDelete(req.params.id);
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "USER_DELETED",
+      details: `Permanently deleted account [${user.name}] with Email: ${user.email}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.json({ message: "User deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -88,6 +111,16 @@ router.patch("/jobs/:id/status", protect, authorize("admin"), async (req, res) =
       { new: true }
     );
     if (!job) return res.status(404).json({ message: "Job not found" });
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "JOB_STATUS_UPDATE",
+      details: `Modified job posting position [${job.title}] status to: ${status}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.json(job);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -97,8 +130,20 @@ router.patch("/jobs/:id/status", protect, authorize("admin"), async (req, res) =
 // 🗑️ DELETE /api/admin/jobs/:id (Admin Only)
 router.delete("/jobs/:id", protect, authorize("admin"), async (req, res) => {
   try {
-    const job = await Job.findByIdAndDelete(req.params.id);
+    const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
+
+    await Job.findByIdAndDelete(req.params.id);
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "JOB_DELETED",
+      details: `Permanently removed posted job: "${job.title}" from company database logs`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.json({ message: "Job deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -127,7 +172,7 @@ router.get("/applications", protect, authorize("admin"), async (req, res) => {
 
     const applications = await Application.find(queryCondition)
       .populate("jobId", "title company location") 
-      .populate("applicantId", "name email")       
+      .populate("applicantId", "name email")      
       .sort({ createdAt: -1 });                    
 
     res.json(applications);
@@ -139,8 +184,20 @@ router.get("/applications", protect, authorize("admin"), async (req, res) => {
 // 🗑️ DELETE /api/admin/applications/:id (Admin Only)
 router.delete("/applications/:id", protect, authorize("admin"), async (req, res) => {
   try {
-    const application = await Application.findByIdAndDelete(req.params.id);
+    const application = await Application.findById(req.params.id);
     if (!application) return res.status(404).json({ message: "Application not found" });
+
+    await Application.findByIdAndDelete(req.params.id);
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "APPLICATION_PURGED",
+      details: `Purged applicant submission data record ID: ${req.params.id}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.json({ message: "Application deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -168,6 +225,16 @@ router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
     });
 
     await newBroadcast.save();
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "BROADCAST_CREATED",
+      details: `Admin deployed notification alert: "${message.substring(0, 40)}..." targeting group: ${targetGroup}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.status(201).json({ success: true, broadcast: newBroadcast });
   } catch (error) {
     res.status(500).json({ message: "Server error while creating broadcast", error: error.message });
@@ -192,9 +259,57 @@ router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) =>
   try {
     const broadcast = await Broadcast.findByIdAndDelete(req.params.id);
     if (!broadcast) return res.status(404).json({ message: "Broadcast warning log not found" });
+
+    // 🛡️ Trigger Log inside Action!
+    const logEntry = new AuditLog({
+      action: "BROADCAST_DELETED",
+      details: `Deleted global system broadcast notification message log template`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
     res.json({ message: "Broadcast deleted successfully from server logs" });
   } catch (error) {
     res.status(500).json({ message: "Server error while deleting broadcast", error: error.message });
+  }
+});
+
+// ========================================================
+// 🛡️ --- NEW: SYSTEM AUDIT LOG MATRIX & PURGE ENDPOINTS ---
+// ========================================================
+
+// ⚡ GET /api/admin/audit-logs — Pull full administrative action history
+router.get("/audit-logs", protect, authorize("admin"), async (req, res) => {
+  try {
+    const logs = await AuditLog.find()
+      .populate("performedBy", "name email")
+      .sort({ createdAt: -1 }); 
+    res.json({ success: true, logs });
+  } catch (error) {
+    res.status(500).json({ message: "Logs fetch karne me dikkat aayi", error: error.message });
+  }
+});
+
+// ⚡ DELETE /api/admin/audit-logs/purge — Purge/Clear old expired tracking logs
+router.delete("/audit-logs/purge", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { retentionDays } = req.body; 
+    
+    let queryCondition = {};
+    if (retentionDays) {
+      const cutOffDate = new Date();
+      cutOffDate.setDate(cutOffDate.getDate() - parseInt(retentionDays));
+      queryCondition = { createdAt: { $lt: cutOffDate } };
+    }
+
+    const result = await AuditLog.deleteMany(queryCondition);
+    res.json({ 
+      success: true, 
+      message: `System logs successfully purged. Deleted ${result.deletedCount} entries.` 
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Automated clear logs process failed", error: error.message });
   }
 });
 

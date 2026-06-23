@@ -5,10 +5,10 @@ const menuItems = [
   { label: "User Management", path: "/admin/users", icon: "👥" },
   { label: "Jobs Overview", path: "/admin/jobs", icon: "💼" },
   { label: "Applications", path: "/admin/applications", icon: "📋" },
-  { label: "System Broadcast", path: "/admin/broadcast", icon: "📢" }, // 👈 ADD THIS LINE
+  { label: "System Broadcast", path: "/admin/broadcast", icon: "📢" },
+  { label: "System Audit Logs", path: "/admin/audit-logs", icon: "🛡️" }, // 👈 NEW LY ADDED AUDIT LOG TAB
 ];
 
-// closeMobileMenu prop ko pass-through kiya layout drawer toggling ke liye
 export default function AdminSidebar({ closeMobileMenu }) {
   const navigate = useNavigate();
 
@@ -16,17 +16,13 @@ export default function AdminSidebar({ closeMobileMenu }) {
     if (window.confirm("Are you sure you want to log out from the Admin Panel?")) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      
-      // Agar mobile menu khula hai toh band karo
       if (closeMobileMenu) closeMobileMenu();
-      
       navigate("/");
     }
   };
 
   return (
     <div className="flex h-full w-full flex-col overflow-y-auto bg-gray-950 text-white select-none shadow-xl md:sticky md:top-0 md:h-screen md:w-64 border-r border-gray-850">
-
       {/* Brand Logo Header */}
       <div className="px-6 py-5 border-b border-gray-850/60 bg-gray-900/20">
         <h1 className="text-xl font-bold text-blue-400 tracking-tight flex items-center gap-2">
@@ -43,7 +39,6 @@ export default function AdminSidebar({ closeMobileMenu }) {
           <NavLink
             key={item.path}
             to={item.path}
-            // Link click hote hi mobile menu close karne ka checker hook callback trigger
             onClick={() => closeMobileMenu && closeMobileMenu()}
             className={({ isActive }) =>
               `flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 transform outline-none
@@ -69,7 +64,6 @@ export default function AdminSidebar({ closeMobileMenu }) {
           <span className="tracking-wide">Logout</span>
         </button>
       </div>
-
     </div>
   );
 }

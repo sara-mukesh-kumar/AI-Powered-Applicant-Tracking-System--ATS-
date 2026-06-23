@@ -11,8 +11,9 @@ const NotificationBanner = () => {
         const userStr = localStorage.getItem("user");
         const user = userStr ? JSON.parse(userStr) : {};
         
-        let role = user.role ? user.role.toLowerCase() : ""; 
+        let role = user.role ? user.role.toLowerCase().trim() : ""; 
 
+        // 🌟 JWT Token Decode Fallback handler
         if (!role && token) {
           try {
             const base64Url = token.split('.')[1];
@@ -24,39 +25,45 @@ const NotificationBanner = () => {
                 .join('')
             );
             const decoded = JSON.parse(jsonPayload);
-            if (decoded && decoded.role) role = decoded.role.toLowerCase();
+            if (decoded && decoded.role) role = decoded.role.toLowerCase().trim();
           } catch (e) {
-            console.error("Token decode error:", e);
+            console.error("Token structure evaluation error:", e);
           }
         }
 
+        // 🌟 Flexible URL Route Scanner (Supports /applicant/dashboard context)
         if (!role) {
           const currentPath = window.location.pathname.toLowerCase();
-          if (currentPath.includes("recruiter") || currentPath.includes("employ")) role = "recruiter";
-          else if (currentPath.includes("applicant") || currentPath.includes("user")) role = "applicant";
+          if (currentPath.includes("recruiter") || currentPath.includes("employ")) {
+            role = "recruiter";
+          } else if (currentPath.includes("applicant") || currentPath.includes("user") || currentPath.includes("app")) {
+            role = "applicant";
+          }
         }
 
-        console.log("Guessed/Parsed Role:", role);
+        console.log("Final Unified Audience Filter Role:", role);
 
         const res = await fetch("/api/admin/broadcasts", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = await res.json();
         
         if (data.success) {
-          console.log("Raw Database Data Check:", data.broadcasts);
+          console.log("Database response logs array check:", data.broadcasts);
           
-          // Forcefully display for testing if targetGroup has spelling variations
           const filtered = data.broadcasts.filter((b) => {
             const group = b.targetGroup ? b.targetGroup.toLowerCase().trim() : "all";
-            return group === "all" || group === "recruiter" || group === role;
+            // Normal fallback matching
+            return b.isActive !== false && (group === "all" || group === "applicant" || group === "recruiter" || group === role);
           });
 
-          console.log("Filtered Data Elements:", filtered);
+          console.log("Filtered results live mapping count:", filtered.length);
           setBroadcasts(filtered);
         }
       } catch (err) {
-        console.error("Broadcast fetch error:", err);
+        console.error("Broadcast fetch engine critical crash error:", err);
       }
     };
 
@@ -72,19 +79,19 @@ const NotificationBanner = () => {
   if (visible.length === 0) return null;
 
   return (
-    <div className="w-full flex flex-col gap-2 px-6 pt-4">
+    <div className="w-full flex flex-col gap-2 mb-4">
       {visible.map((b) => (
         <div
           key={b._id}
-          className="flex items-start gap-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl px-4 py-3 shadow-sm border border-amber-100"
+          className="flex items-start gap-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl px-4 py-3.5 shadow-sm border border-amber-100/60"
         >
-          <span className="text-amber-600 text-lg mt-0.5 animate-pulse">📢</span>
+          <span className="text-amber-600 text-lg mt-0.5 animate-pulse select-none">📢</span>
           <div className="flex-1">
-            <p className="text-sm font-medium text-amber-900 leading-relaxed">{b.message}</p>
+            <p className="text-sm font-medium text-amber-950 leading-relaxed">{b.message}</p>
           </div>
           <button
             onClick={() => handleDismiss(b._id)}
-            className="cursor-pointer text-amber-400 hover:text-amber-700 text-base font-bold transition ml-2"
+            className="cursor-pointer text-amber-400 hover:text-amber-800 text-base font-bold transition-colors ml-2 select-none"
           >
             ✕
           </button>

@@ -13,19 +13,15 @@ import AdminUserManagement from "./components/Admin/AdminUserManagement";
 import AdminJobsOverview from "./components/Admin/AdminJobsOverview";
 import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonitor";
 import AdminBroadcast from "./components/Admin/AdminBroadcast";
+import AdminAuditLogs from "./components/Admin/AdminAuditLogs"; // 👈 NEWLY ADDED IMPORT
 
 // Recruiter Components
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
 import RecruiterLayout from "./components/Recruiter/RecruiterLayout";
 import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
-
 import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
-// import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
-// import RecruiterSidebar from "./components/Recruiter/RecruiterSidebar";
 
 // Applicant Components
-// Note: You should ideally have an ApplicantLayout just like AdminLayout. 
-// Using ApplicantDashboard as a wrapper might break your UI if it doesn't have an <Outlet />
 import ApplicantDashboard from "./components/Applicant/ApplicantDashboard";
 import ApplicantProfile from "./components/Applicant/ApplicantProfile";
 import ApplicationTracker from "./components/Applicant/ApplicationTracker";
@@ -35,32 +31,22 @@ import ResumeUpload from "./components/Applicant/ResumeUpload";
 import SavedJobs from "./components/Applicant/SavedJobs";
 import ApplicantLayout from "./components/Applicant/ApplicantLayout";
 
-
-
-// ==========================================
-// ROLE-BASED PROTECTED ROUTE COMPONENT
-// ==========================================
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // 1. If not logged in, send to login page
   if (!token || !user) {
     return <Navigate to="/" replace />;
   }
 
-  // 2. If user's role is not in the allowed list, kick them out
   if (!allowedRoles.includes(user.role)) {
-    // Redirect them to their proper dashboard
     if (user.role === "admin") return <Navigate to="/admin/dashboard" replace />;
     if (user.role === "recruiter") return <Navigate to="/recruiter/dashboard" replace />;
     return <Navigate to="/applicant/dashboard" replace />;
   }
 
-  // 3. Authorized! Render the layout.
   return children;
 };
-
 
 function App() {
   return (
@@ -85,6 +71,7 @@ function App() {
           <Route path="applications" element={<AdminApplicationsMonitor />} />
           <Route path="users" element={<AdminUserManagement />} />
           <Route path="broadcast" element={<AdminBroadcast />} />
+          <Route path="audit-logs" element={<AdminAuditLogs />} /> {/* 👈 NEWLY ADDED AUDIT ROUTE */}
         </Route>
 
         {/* ================= RECRUITER ROUTES ================= */}
@@ -119,7 +106,6 @@ function App() {
           <Route path="resumeupload" element={<ResumeUpload />} />
           <Route path="savedjobs" element={<SavedJobs />} />
         </Route>
-
       </Routes>
     </BrowserRouter>
   );

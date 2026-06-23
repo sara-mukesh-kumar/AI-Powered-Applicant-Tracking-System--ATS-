@@ -81,15 +81,16 @@ export default function ApplicationsMonitor() {
     }
   };
 
-  // --- ADVANCED SEARCH + AI FILTERS LOGIC ---
+  // --- ADVANCED SEARCH + AI FILTERS LOGIC (Nested aiAnalysis fixed) ---
   const filteredApps = applications.filter((app) => {
     const applicantName = app.applicantId?.name || "";
     const jobTitle = app.jobId?.title || "";
     const company = app.jobId?.company || "";
     const appStatus = app.status || "Applied";
-    const aiScore = app.aiScore || 0;
     
-    const extractedSkills = app.extractedSkills || []; 
+    // Fixed Object Path Destructuring matching teammate schema layout
+    const aiScore = app.aiAnalysis?.aiScore !== undefined ? app.aiAnalysis.aiScore : (app.aiScore || 0);
+    const extractedSkills = app.aiAnalysis?.extractedSkills || app.extractedSkills || []; 
 
     const matchSearch =
       applicantName.toLowerCase().includes(search.toLowerCase()) ||
@@ -122,7 +123,7 @@ export default function ApplicationsMonitor() {
 
   return (
     <div className="space-y-6">
-      {/* Responsive Header Typography */}
+      {/* Page Header Header */}
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Applications Monitor</h2>
         <p className="text-gray-500 text-xs sm:text-sm mt-1">
@@ -138,7 +139,7 @@ export default function ApplicationsMonitor() {
           <input
             type="text"
             placeholder="🔍 Name, position, company..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -148,7 +149,7 @@ export default function ApplicationsMonitor() {
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-gray-600 block">Workflow Status</label>
           <select
-            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -163,12 +164,12 @@ export default function ApplicationsMonitor() {
         {/* AI Extracted Skill Target Filter */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-purple-700 flex items-center gap-1">
-            🤖 Filter by Extracted Skill
+            <span>🤖</span> Filter by Extracted Skill
           </label>
           <input
             type="text"
             placeholder="e.g. React, Python, Node..."
-            className="w-full border border-purple-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full border border-purple-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
             value={skillSearch}
             onChange={(e) => setSkillSearch(e.target.value)}
           />
@@ -178,7 +179,7 @@ export default function ApplicationsMonitor() {
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs font-semibold text-blue-700">
             <span className="flex items-center gap-1">⚡ Minimum AI Score</span>
-            <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">{minAiScore}%</span>
+            <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">{minAiScore}%</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400">0%</span>
@@ -199,10 +200,10 @@ export default function ApplicationsMonitor() {
         Showing {filteredApps.length} of {applications.length} applications
       </div>
 
-      {/* Table Layer Isolated Horizontal Scroll Container */}
-      <div className="overflow-x-auto rounded-2xl bg-white shadow w-full">
+      {/* Table Layer Isolated Container */}
+      <div className="overflow-x-auto rounded-2xl bg-white shadow w-full border border-gray-100">
         <table className="min-w-[1150px] w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+          <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
             <tr>
               <th className="px-6 py-4 text-left">Applicant</th>
               <th className="px-6 py-4 text-left">Job Title</th>
@@ -213,136 +214,149 @@ export default function ApplicationsMonitor() {
               <th className="px-6 py-4 text-left">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 text-gray-700">
             {filteredApps.length === 0 ? (
               <tr>
-                <td colSpan="7" className="text-center py-10 text-gray-400">
+                <td colSpan="7" className="text-center py-12 text-gray-400 font-medium italic">
                   No applicant records matched your advanced query criteria.
                 </td>
               </tr>
             ) : (
-              filteredApps.map((app) => (
-                <tr key={app._id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                        {(app.applicantId?.name || "U").charAt(0)}
+              filteredApps.map((app) => {
+                const currentAiScore = app.aiAnalysis?.aiScore !== undefined ? app.aiAnalysis.aiScore : (app.aiScore || 0);
+                return (
+                  <tr key={app._id} className="hover:bg-gray-50/60 transition">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs uppercase shrink-0 border border-purple-200">
+                          {(app.applicantId?.name || "U").charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800 truncate max-w-[150px]">{app.applicantId?.name || "Unknown User"}</p>
+                          <p className="text-[11px] text-gray-400 truncate max-w-[150px]">{app.applicantId?.email || "N/A"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-800 truncate max-w-[140px] sm:max-w-none">{app.applicantId?.name || "Unknown User"}</p>
-                        <p className="text-xs text-gray-400 truncate max-w-[140px] sm:max-w-none">{app.applicantId?.email || "N/A"}</p>
+                    </td>
+
+                    <td className="px-6 py-4 font-semibold text-gray-700 truncate max-w-[180px]">
+                      {app.jobId?.title || "Deleted Position"}
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-500 truncate max-w-[140px] font-medium">{app.jobId?.company || "N/A"}</td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${aiScoreBg(currentAiScore)}`}>
+                        <span>🤖</span>
+                        <span className={aiScoreColor(currentAiScore)}>
+                          {currentAiScore}%
+                        </span>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4 font-medium text-gray-700 truncate max-w-[180px] sm:max-w-none">
-                    {app.jobId?.title || "Deleted Job Position"}
-                  </td>
-
-                  <td className="px-6 py-4 text-gray-500 truncate max-w-[140px] sm:max-w-none">{app.jobId?.company || "N/A"}</td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${aiScoreBg(app.aiScore || 0)}`}>
-                      <span>🤖</span>
-                      <span className={aiScoreColor(app.aiScore || 0)}>
-                        {app.aiScore !== undefined ? `${app.aiScore}%` : "0%"}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-0.5 rounded-full text-[11px] font-bold tracking-wide shadow-200 ${statusBadge(app.status)}`}>
+                        {app.status || "Applied"}
                       </span>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(app.status)}`}>
-                      {app.status || "Applied"}
-                    </span>
-                  </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => setSelectedApp(app)}
+                        className="cursor-pointer inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200/60 px-3 py-1 rounded-xl text-xs font-bold hover:bg-purple-100 transition shadow-sm"
+                      >
+                        ✨ View AI Insights
+                      </button>
+                    </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => setSelectedApp(app)}
-                      className="cursor-pointer inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-purple-100 transition shadow-sm"
-                    >
-                      ✨ View AI Insights
-                    </button>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => handleDelete(app._id)}
-                      className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition shadow-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleDelete(app._id)}
+                        className="cursor-pointer bg-red-500 text-white font-bold px-3 py-1 rounded-xl text-xs hover:bg-red-600 transition shadow-sm"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* --- RESPONSIVE PREMIUM AI INSIGHTS MODAL --- */}
+      {/* --- RESPONSIVE PREMIUM GLASSMORPHIC AI INSIGHTS MODAL --- */}
       {selectedApp && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md sm:max-w-lg w-full p-5 sm:p-6 shadow-2xl relative border border-gray-100 transform scale-100 transition-all max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md sm:max-w-lg w-full p-6 shadow-2xl relative border border-gray-100 max-h-[85vh] overflow-y-auto scrollbar-thin">
             
             {/* Modal Head */}
             <div className="flex justify-between items-start border-b border-gray-100 pb-3">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
                   <span>🤖</span> AI Evaluation Summary
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Applicant: <span className="font-semibold">{selectedApp.applicantId?.name || "Candidate"}</span>
+                <p className="text-xs text-gray-500 mt-1 font-medium">
+                  Candidate Profile: <span className="font-bold text-gray-800">{selectedApp.applicantId?.name || "Candidate"}</span>
                 </p>
               </div>
               <button 
                 onClick={() => setSelectedApp(null)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer p-1"
+                className="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer p-1 transition"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Body Container */}
-            <div className="mt-4 space-y-4">
+            <div className="mt-5 space-y-4">
               {/* Match Score Indicator Row */}
-              <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs sm:text-sm">
-                <span className="font-medium text-gray-700">Calculated Job Suitability:</span>
-                <span className={`px-2.5 py-1 rounded-full font-extrabold text-xs sm:text-sm ${aiScoreBg(selectedApp.aiScore || 0)} ${aiScoreColor(selectedApp.aiScore || 0)}`}>
-                  {selectedApp.aiScore || 0}% Match
-                </span>
-              </div>
+              {(() => {
+                const currentAiScore = selectedApp.aiAnalysis?.aiScore !== undefined ? selectedApp.aiAnalysis.aiScore : (selectedApp.aiScore || 0);
+                const currentSkills = selectedApp.aiAnalysis?.extractedSkills || selectedApp.extractedSkills || [];
+                const currentSummary = selectedApp.aiAnalysis?.aiSummary || selectedApp.aiSummary || "";
 
-              {/* Extracted Skills List Layout */}
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">AI Extracted Skills:</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedApp.extractedSkills && selectedApp.extractedSkills.length > 0 ? (
-                    selectedApp.extractedSkills.map((skill, index) => (
-                      <span key={index} className="bg-purple-50 text-purple-700 border border-purple-100 px-2 sm:px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap">
-                        {skill}
+                return (
+                  <>
+                    <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-3.5 border border-gray-100 text-xs sm:text-sm">
+                      <span className="font-bold text-gray-700">AI Recruiter Assessment Fitment:</span>
+                      <span className={`px-3 py-1 rounded-xl font-black text-xs sm:text-sm ${aiScoreBg(currentAiScore)} ${aiScoreColor(currentAiScore)}`}>
+                        {currentAiScore}% Core Match
                       </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-400 italic">No explicit skill parameters parsed from document.</span>
-                  )}
-                </div>
-              </div>
+                    </div>
 
-              {/* Core Context AI Summary Block */}
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Fitment Analysis Summary:</h4>
-                <div className="bg-purple-50/50 border border-purple-100/70 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm text-gray-700 leading-relaxed max-h-40 sm:max-h-48 overflow-y-auto">
-                  {selectedApp.aiSummary || "AI Parsing engine results for this record will generate automatically once the candidate's core document pipeline completes execution."}
-                </div>
-              </div>
+                    {/* Extracted Skills List Layout */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-purple-800 uppercase tracking-wider">AI Parsed Skill Badges:</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {currentSkills.length > 0 ? (
+                          currentSkills.map((skill, index) => (
+                            <span key={index} className="bg-purple-50 text-purple-700 border border-purple-100 px-2.5 py-0.5 rounded-lg text-xs font-bold">
+                              {skill}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 font-medium italic">No explicit skill parameters parsed from document.</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Core Context AI Summary Block */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-purple-800 uppercase tracking-wider">Analysis Matrix Insight:</h4>
+                      <div className="bg-purple-50/40 border border-purple-100/60 rounded-2xl p-4 text-xs sm:text-sm text-gray-700 leading-relaxed max-h-44 overflow-y-auto scrollbar-thin">
+                        {currentSummary || "AI Parsing engine summary results will populate automatically once resume processing completes execution."}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Modal Footer Controls */}
             <div className="mt-6 text-right">
               <button
                 onClick={() => setSelectedApp(null)}
-                className="cursor-pointer bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-800 transition shadow w-full sm:w-auto"
+                className="cursor-pointer bg-gray-9alive bg-gray-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition w-full sm:w-auto shadow-md"
               >
                 Close Insights
               </button>
