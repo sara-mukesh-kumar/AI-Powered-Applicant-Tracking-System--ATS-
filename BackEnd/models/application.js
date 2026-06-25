@@ -5,20 +5,28 @@ const applicationSchema = new mongoose.Schema(
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: "Job", required: true },
     applicantId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     
-    // Week 2: File Storage
-    resumeUrl: { type: String, required: true }, // The S3 URL
+    // File Storage
+    resumeUrl: { type: String, required: true }, // The resume URL
     
-    // Week 2: Kanban Pipeline Status
+    // Kanban Pipeline Status
     status: {
       type: String,
-      enum: ["Applied", "Interview", "Offered", "Rejected"],
+      enum: ["Applied", "Interview", "Offered", "Rejected", "Withdrawn"],
       default: "Applied",
     },
 
-    // Week 3: AI Integration & Resume Parsing
+    // AI Integration & Resume Parsing
     aiScore: { type: Number }, // Match score 1-100
     aiSummary: { type: String }, // Why they are a good fit
-    extractedSkills: [{ type: String }], // Skills found in the PDF
+    extractedSkills: [{ type: String }], // Skills found in the resume
+
+    // Recruiter notes and interactions
+    notes: { type: String, default: "" },
+    interviewDate: { type: Date },
+    interviewNotes: { type: String },
+    
+    // Rating by recruiter
+    recruiterRating: { type: Number, min: 1, max: 5 },
   },
   { timestamps: true }
 );
