@@ -6,7 +6,8 @@ const menuItems = [
   { label: "Jobs Overview", path: "/admin/jobs", icon: "💼" },
   { label: "Applications", path: "/admin/applications", icon: "📋" },
   { label: "System Broadcast", path: "/admin/broadcast", icon: "📢" },
-  { label: "System Audit Logs", path: "/admin/audit-logs", icon: "🛡️" }, // 👈 NEW LY ADDED AUDIT LOG TAB
+  { label: "Communication", path: "/admin/communication", icon: "✉️" }, // 👈 NEWLY ADDED EMAIL HUB TAB
+  { label: "System Audit Logs", path: "/admin/audit-logs", icon: "🛡️" }, 
 ];
 
 export default function AdminSidebar({ closeMobileMenu }) {
@@ -28,7 +29,7 @@ export default function AdminSidebar({ closeMobileMenu }) {
         <h1 className="text-xl font-bold text-blue-400 tracking-tight flex items-center gap-2">
           <span>🤖</span> ATS Admin
         </h1>
-        <p className="text-[10px] uppercase font-bold text-gray-500 tracking-widest mt-1">
+        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-1">
           Management Panel
         </p>
       </div>
@@ -58,10 +59,9 @@ export default function AdminSidebar({ closeMobileMenu }) {
       <div className="px-4 py-5 border-t border-gray-850/60 bg-gray-900/10">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-transparent hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 transition-all duration-200 cursor-pointer outline-none"
+          className="w-full flex items-center gap-3.5 text-red-600 bg-red-50/5 hover:bg-red-50/10 border border-red-500/20 font-medium text-sm px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
         >
-          <span className="text-base">🚪</span>
-          <span className="tracking-wide">Logout</span>
+          Delete Token Logout
         </button>
       </div>
     </div>

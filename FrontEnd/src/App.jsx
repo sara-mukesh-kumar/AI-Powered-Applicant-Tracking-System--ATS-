@@ -13,12 +13,12 @@ import AdminUserManagement from "./components/Admin/AdminUserManagement";
 import AdminJobsOverview from "./components/Admin/AdminJobsOverview";
 import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonitor";
 import AdminBroadcast from "./components/Admin/AdminBroadcast";
-import AdminAuditLogs from "./components/Admin/AdminAuditLogs"; // 👈 NEWLY ADDED IMPORT
+import AdminAuditLogs from "./components/Admin/AdminAuditLogs";
+import AdminCommunicationCenter from "./components/Admin/admincommunicationcenter.jsx";
 
 // Recruiter Components
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
 import RecruiterLayout from "./components/Recruiter/RecruiterLayout";
-import RecruiterNavbar from "./components/Recruiter/RecruiterNavbar";
 import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
 
 // Applicant Components
@@ -73,7 +73,8 @@ function App() {
           <Route path="applications" element={<AdminApplicationsMonitor />} />
           <Route path="users" element={<AdminUserManagement />} />
           <Route path="broadcast" element={<AdminBroadcast />} />
-          <Route path="audit-logs" element={<AdminAuditLogs />} /> {/* 👈 NEWLY ADDED AUDIT ROUTE */}
+          <Route path="audit-logs" element={<AdminAuditLogs />} />
+          <Route path="communication" element={<AdminCommunicationCenter />} />
         </Route>
 
         {/* ================= RECRUITER ROUTES ================= */}

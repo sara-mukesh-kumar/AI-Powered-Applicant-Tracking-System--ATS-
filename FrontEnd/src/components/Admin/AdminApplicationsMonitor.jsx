@@ -1,367 +1,257 @@
 import { useState, useEffect } from "react";
 
-const statusBadge = (status) => {
-  const lowerStatus = status?.toLowerCase();
-  if (lowerStatus === "applied") return "bg-blue-100 text-blue-700 capitalize";
-  if (lowerStatus === "interview") return "bg-purple-100 text-purple-700 capitalize";
-  if (lowerStatus === "offered") return "bg-green-100 text-green-700 capitalize";
-  if (lowerStatus === "rejected") return "bg-red-100 text-red-700 capitalize";
-  return "bg-gray-100 text-gray-700 capitalize";
-};
-
-const aiScoreColor = (score) => {
-  if (score >= 80) return "text-green-600";
-  if (score >= 60) return "text-yellow-600";
-  return "text-red-600";
-};
-
-const aiScoreBg = (score) => {
-  if (score >= 80) return "bg-green-50 border border-green-200";
-  if (score >= 60) return "bg-yellow-50 border border-yellow-200";
-  return "bg-red-50 border border-red-200";
-};
-
 export default function ApplicationsMonitor() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
-  // Basic Filters
+
+  // Control Engine Filtering States
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [minScore, setMinScore] = useState(0);
 
-  // --- ADVANCED AI FILTERS STATE ---
-  const [minAiScore, setMinAiScore] = useState(0); 
-  const [skillSearch, setSkillSearch] = useState(""); 
-  
-  // --- AI MODAL STATE ---
-  const [selectedApp, setSelectedApp] = useState(null); 
+  // Focus Drawer Target State
+  const [activeDrawerApp, setActiveDrawerApp] = useState(null);
 
-  const fetchApplications = async () => {
+  useEffect(() => {
+    fetchApplicationsPipeline();
+  }, [statusFilter]); // Reload query when absolute status constraints shift
+
+  const fetchApplicationsPipeline = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/admin/applications", {
+      
+      // Dynamic query assembler targeting backend routes parameters mapping
+      let url = `/api/admin/applications?status=${statusFilter}`;
+      if (minScore > 0) {
+        url += `&scoreMin=${minScore}`;
+      }
+
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
-      if (!res.ok) throw new Error("Failed to fetch applications data.");
-      
       const data = await res.json();
-      setApplications(data);
+      
+      if (res.ok) {
+        setApplications(data);
+      } else {
+        setError(data.message || "Failed to synchronise candidate streaming logs");
+      }
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Something went wrong.");
+      setError("Data pipeline transmission breakdown.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this application permanently?")) {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`/api/admin/applications/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
-          setApplications((prev) => prev.filter((app) => app._id !== id));
-        } else {
-          alert("Failed to delete application from server.");
-        }
-      } catch (err) {
-        alert("Server error occurred while deleting.");
-      }
-    }
-  };
-
-  // --- ADVANCED SEARCH + AI FILTERS LOGIC (Nested aiAnalysis fixed) ---
-  const filteredApps = applications.filter((app) => {
-    const applicantName = app.applicantId?.name || "";
-    const jobTitle = app.jobId?.title || "";
-    const company = app.jobId?.company || "";
-    const appStatus = app.status || "Applied";
+  // Safe Client-side text verification stream mapping
+  const sortedAndFilteredPool = applications.filter((app) => {
+    const candidateName = app.applicantId?.name?.toLowerCase() || "";
+    const jobTitle = app.jobId?.title?.toLowerCase() || "";
+    const matchText = candidateName.includes(search.toLowerCase()) || jobTitle.includes(search.toLowerCase());
     
-    // Fixed Object Path Destructuring matching teammate schema layout
-    const aiScore = app.aiAnalysis?.aiScore !== undefined ? app.aiAnalysis.aiScore : (app.aiScore || 0);
-    const extractedSkills = app.aiAnalysis?.extractedSkills || app.extractedSkills || []; 
-
-    const matchSearch =
-      applicantName.toLowerCase().includes(search.toLowerCase()) ||
-      jobTitle.toLowerCase().includes(search.toLowerCase()) ||
-      company.toLowerCase().includes(search.toLowerCase());
-
-    const matchStatus = 
-      statusFilter === "all" || appStatus.toLowerCase() === statusFilter.toLowerCase();
-
-    const matchAiScore = aiScore >= minAiScore;
-
-    const matchSkills = 
-      skillSearch.trim() === "" || 
-      extractedSkills.some(skill => skill.toLowerCase().includes(skillSearch.toLowerCase()));
-
-    return matchSearch && matchStatus && matchAiScore && matchSkills;
+    // Fallback protection filter check against dynamic range tracking
+    const currentScore = app.aiAnalysis?.aiScore ?? app.aiScore ?? 0;
+    return matchText && currentScore >= minScore;
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400 text-base sm:text-lg font-medium">Loading applications...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-center py-10 text-red-500 font-medium">Error: {error}</div>;
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Page Header Header */}
+    <div className="p-6 max-w-7xl mx-auto space-y-6 relative min-h-screen">
+      {/* Module Description Matrix */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Applications Monitor</h2>
-        <p className="text-gray-500 text-xs sm:text-sm mt-1">
-          Track and monitor all system applications with live AI scores and deep resume parsed insights
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">AI Screening & Application Pipeline</h1>
+        <p className="text-sm text-gray-500">Audit system-wide parsed metrics, range vectors, and real-time data queues.</p>
       </div>
 
-      {/* --- RESPONSIVE ADVANCED AI FILTER PANEL --- */}
-      <div className="bg-white rounded-2xl shadow p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-        {/* Basic Global Search */}
+      {/* Control Filters Hub */}
+      <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-xs grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+        {/* Text Field Query Input */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-600 block">Search Candidate / Job</label>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Search Identity</label>
           <input
             type="text"
-            placeholder="🔍 Name, position, company..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            placeholder="Search candidate name or role..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
           />
         </div>
 
-        {/* Status Dropdown */}
+        {/* Pipeline Stage State Select */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-600 block">Workflow Status</label>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Pipeline Track Stage</label>
           <select
-            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
           >
-            <option value="all">All Statuses</option>
-            <option value="applied">Applied</option>
-            <option value="interview">Interview</option>
-            <option value="offered">Offered</option>
-            <option value="rejected">Rejected</option>
+            <option value="all">All Submissions</option>
+            <option value="applied">Applied / New Entry</option>
+            <option value="shortlisted">Shortlisted Logs</option>
+            <option value="rejected">Rejected Index</option>
           </select>
         </div>
 
-        {/* AI Extracted Skill Target Filter */}
+        {/* AI Vector Threshold range slider slider controller */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-purple-700 flex items-center gap-1">
-            <span>🤖</span> Filter by Extracted Skill
-          </label>
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-semibold text-gray-500 uppercase">Min AI Engine Threshold</label>
+            <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{minScore}%</span>
+          </div>
           <input
-            type="text"
-            placeholder="e.g. React, Python, Node..."
-            className="w-full border border-purple-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-            value={skillSearch}
-            onChange={(e) => setSkillSearch(e.target.value)}
+            type="range"
+            min="0"
+            max="100"
+            value={minScore}
+            onChange={(e) => setMinScore(Number(e.target.value))}
+            className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
         </div>
+      </div>
 
-        {/* AI Score Ranger Slider Component */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs font-semibold text-blue-700">
-            <span className="flex items-center gap-1">⚡ Minimum AI Score</span>
-            <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">{minAiScore}%</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">0%</span>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              className="w-full accent-blue-600 h-2 bg-gray-200 rounded-lg cursor-pointer flex-1"
-              value={minAiScore}
-              onChange={(e) => setMinAiScore(Number(e.target.value))}
-            />
-            <span className="text-xs text-gray-400">100%</span>
-          </div>
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm">{error}</div>
+      )}
+
+      {/* Main Table Flow Visual Grid Layout */}
+      <div className="bg-white border border-gray-100 rounded-xl shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/70 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="p-4">Candidate Identity</th>
+                <th className="p-4">Applied Position</th>
+                <th className="p-4">AI Structural Evaluation</th>
+                <th className="p-4">Pipeline Status</th>
+                <th className="p-4 text-right">Details</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-400">Streaming structural data array...</td>
+                </tr>
+              ) : sortedAndFilteredPool.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-400">No submission documents inside current data bounds indices.</td>
+                </tr>
+              ) : (
+                sortedAndFilteredPool.map((app) => {
+                  const score = app.aiAnalysis?.aiScore ?? app.aiScore ?? 0;
+                  return (
+                    <tr key={app._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="p-4">
+                        <div className="font-semibold text-gray-900">{app.applicantId?.name || "Candidate Node"}</div>
+                        <div className="text-xs text-gray-400">{app.applicantId?.email}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium text-gray-800">{app.jobId?.title || "System Registry Missing"}</div>
+                        <div className="text-xs text-gray-400">{app.jobId?.company}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-16 bg-gray-100 rounded-full h-2 overflow-hidden hidden sm:block">
+                            <div 
+                              className={`h-full rounded-full ${score >= 80 ? "bg-emerald-500" : score >= 60 ? "bg-amber-500" : "bg-red-500"}`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-sm ${
+                            score >= 80 ? "text-emerald-700 bg-emerald-50" : 
+                            score >= 60 ? "text-amber-700 bg-amber-50" : "text-red-700 bg-red-50"
+                          }`}>
+                            {score} Match Score
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${
+                          app.status === "shortlisted" ? "bg-emerald-50 text-emerald-700" :
+                          app.status === "rejected" ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
+                        }`}>
+                          {app.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => setActiveDrawerApp(app)}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          View Analysis Drawer
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div className="text-right text-xs text-gray-500 font-medium px-1">
-        Showing {filteredApps.length} of {applications.length} applications
-      </div>
-
-      {/* Table Layer Isolated Container */}
-      <div className="overflow-x-auto rounded-2xl bg-white shadow w-full border border-gray-100">
-        <table className="min-w-[1150px] w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider font-bold">
-            <tr>
-              <th className="px-6 py-4 text-left">Applicant</th>
-              <th className="px-6 py-4 text-left">Job Title</th>
-              <th className="px-6 py-4 text-left">Company</th>
-              <th className="px-6 py-4 text-left">AI Match Score</th>
-              <th className="px-6 py-4 text-left">Status</th>
-              <th className="px-6 py-4 text-left">Insights</th> 
-              <th className="px-6 py-4 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 text-gray-700">
-            {filteredApps.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="text-center py-12 text-gray-400 font-medium italic">
-                  No applicant records matched your advanced query criteria.
-                </td>
-              </tr>
-            ) : (
-              filteredApps.map((app) => {
-                const currentAiScore = app.aiAnalysis?.aiScore !== undefined ? app.aiAnalysis.aiScore : (app.aiScore || 0);
-                return (
-                  <tr key={app._id} className="hover:bg-gray-50/60 transition">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs uppercase shrink-0 border border-purple-200">
-                          {(app.applicantId?.name || "U").charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-800 truncate max-w-[150px]">{app.applicantId?.name || "Unknown User"}</p>
-                          <p className="text-[11px] text-gray-400 truncate max-w-[150px]">{app.applicantId?.email || "N/A"}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 font-semibold text-gray-700 truncate max-w-[180px]">
-                      {app.jobId?.title || "Deleted Position"}
-                    </td>
-
-                    <td className="px-6 py-4 text-gray-500 truncate max-w-[140px] font-medium">{app.jobId?.company || "N/A"}</td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${aiScoreBg(currentAiScore)}`}>
-                        <span>🤖</span>
-                        <span className={aiScoreColor(currentAiScore)}>
-                          {currentAiScore}%
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-0.5 rounded-full text-[11px] font-bold tracking-wide shadow-200 ${statusBadge(app.status)}`}>
-                        {app.status || "Applied"}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => setSelectedApp(app)}
-                        className="cursor-pointer inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200/60 px-3 py-1 rounded-xl text-xs font-bold hover:bg-purple-100 transition shadow-sm"
-                      >
-                        ✨ View AI Insights
-                      </button>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleDelete(app._id)}
-                        className="cursor-pointer bg-red-500 text-white font-bold px-3 py-1 rounded-xl text-xs hover:bg-red-600 transition shadow-sm"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* --- RESPONSIVE PREMIUM GLASSMORPHIC AI INSIGHTS MODAL --- */}
-      {selectedApp && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md sm:max-w-lg w-full p-6 shadow-2xl relative border border-gray-100 max-h-[85vh] overflow-y-auto scrollbar-thin">
-            
-            {/* Modal Head */}
-            <div className="flex justify-between items-start border-b border-gray-100 pb-3">
-              <div>
-                <h3 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
-                  <span>🤖</span> AI Evaluation Summary
-                </h3>
-                <p className="text-xs text-gray-500 mt-1 font-medium">
-                  Candidate Profile: <span className="font-bold text-gray-800">{selectedApp.applicantId?.name || "Candidate"}</span>
-                </p>
+      {/* Slide-out Insights Analysis Details Drawer Component */}
+      {activeDrawerApp && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex justify-end transition-opacity duration-300">
+          <div className="bg-white w-full max-w-md h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto animate-slide-in border-l border-gray-100">
+            <div className="space-y-6">
+              {/* Drawer Top Header info wrapper */}
+              <div className="flex justify-between items-start border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">{activeDrawerApp.applicantId?.name || "Candidate Dossier"}</h3>
+                  <p className="text-xs text-gray-400">Internal Registry Node ID: {activeDrawerApp._id}</p>
+                </div>
+                <button
+                  onClick={() => setActiveDrawerApp(null)}
+                  className="text-gray-400 hover:text-gray-600 font-medium p-1 transition-colors"
+                >
+                  ✕ Close
+                </button>
               </div>
-              <button 
-                onClick={() => setSelectedApp(null)}
-                className="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer p-1 transition"
-              >
-                ✕
-              </button>
-            </div>
 
-            {/* Modal Body Container */}
-            <div className="mt-5 space-y-4">
-              {/* Match Score Indicator Row */}
-              {(() => {
-                const currentAiScore = selectedApp.aiAnalysis?.aiScore !== undefined ? selectedApp.aiAnalysis.aiScore : (selectedApp.aiScore || 0);
-                const currentSkills = selectedApp.aiAnalysis?.extractedSkills || selectedApp.extractedSkills || [];
-                const currentSummary = selectedApp.aiAnalysis?.aiSummary || selectedApp.aiSummary || "";
+              {/* Core Analytics Scoring Index Metric */}
+              <div className="bg-gray-50/70 p-4 rounded-xl border border-gray-100 text-center space-y-1">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Calculated Match Vector</div>
+                <div className="text-4xl font-extrabold text-blue-600 tracking-tight">
+                  {activeDrawerApp.aiAnalysis?.aiScore ?? activeDrawerApp.aiScore ?? 0}%
+                </div>
+                <p className="text-xs text-gray-500">Synthesized parsing engine matching cross check matrix log rules.</p>
+              </div>
 
-                return (
-                  <>
-                    <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-3.5 border border-gray-100 text-xs sm:text-sm">
-                      <span className="font-bold text-gray-700">AI Recruiter Assessment Fitment:</span>
-                      <span className={`px-3 py-1 rounded-xl font-black text-xs sm:text-sm ${aiScoreBg(currentAiScore)} ${aiScoreColor(currentAiScore)}`}>
-                        {currentAiScore}% Core Match
+              {/* Tagging Arrays Display Section Tokens block */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Identified Domain Competencies</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeDrawerApp.aiAnalysis?.parsedSkills?.length > 0 ? (
+                    activeDrawerApp.aiAnalysis.parsedSkills.map((skill, index) => (
+                      <span key={index} className="bg-blue-50/80 text-blue-700 border border-blue-100/50 px-2.5 py-1 rounded-md text-xs font-medium">
+                        {skill}
                       </span>
-                    </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">No exact indexing token matches detected inside document.</span>
+                  )}
+                </div>
+              </div>
 
-                    {/* Extracted Skills List Layout */}
-                    <div className="space-y-2">
-                      <h4 className="text-xs font-bold text-purple-800 uppercase tracking-wider">AI Parsed Skill Badges:</h4>
-                      <div className="flex flex-wrap gap-1.5">
-                        {currentSkills.length > 0 ? (
-                          currentSkills.map((skill, index) => (
-                            <span key={index} className="bg-purple-50 text-purple-700 border border-purple-100 px-2.5 py-0.5 rounded-lg text-xs font-bold">
-                              {skill}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-400 font-medium italic">No explicit skill parameters parsed from document.</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Core Context AI Summary Block */}
-                    <div className="space-y-2">
-                      <h4 className="text-xs font-bold text-purple-800 uppercase tracking-wider">Analysis Matrix Insight:</h4>
-                      <div className="bg-purple-50/40 border border-purple-100/60 rounded-2xl p-4 text-xs sm:text-sm text-gray-700 leading-relaxed max-h-44 overflow-y-auto scrollbar-thin">
-                        {currentSummary || "AI Parsing engine summary results will populate automatically once resume processing completes execution."}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
+              {/* Text Assessment Explainability Blocks */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">AI Extraction Summarized Text</h4>
+                <blockquote className="bg-amber-50/40 text-amber-900 border-l-4 border-amber-400 p-3 rounded-r-lg text-xs leading-relaxed italic">
+                  {activeDrawerApp.aiAnalysis?.explanation || "No deep processing explanation logs generated inside active database model instance."}
+                </blockquote>
+              </div>
             </div>
 
-            {/* Modal Footer Controls */}
-            <div className="mt-6 text-right">
+            {/* Bottom Panel Container Actions Close */}
+            <div className="border-t border-gray-100 pt-4 mt-8">
               <button
-                onClick={() => setSelectedApp(null)}
-                className="cursor-pointer bg-gray-9alive bg-gray-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition w-full sm:w-auto shadow-md"
+                onClick={() => setActiveDrawerApp(null)}
+                className="w-full bg-gray-900 text-white hover:bg-gray-800 text-sm font-medium py-2.5 rounded-xl transition-all"
               >
-                Close Insights
+                Done Auditing Profile
               </button>
             </div>
-
           </div>
         </div>
       )}
