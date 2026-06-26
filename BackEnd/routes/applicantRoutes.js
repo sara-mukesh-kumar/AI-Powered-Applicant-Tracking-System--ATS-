@@ -235,7 +235,8 @@ router.post("/apply/:jobId", protect, authorize("applicant"), async (req, res) =
       status: "Applied",
       aiScore: aiScoringResult.aiScore,
       aiSummary: aiScoringResult.aiSummary,
-      extractedSkills: aiScoringResult.extractedSkills
+      extractedSkills: aiScoringResult.extractedSkills,
+      notes: req.body.note || req.body.notes || ""
     });
 
     // Populate references
@@ -443,6 +444,104 @@ router.get("/saved-jobs", protect, authorize("applicant"), async (req, res) => {
         pages: Math.ceil(totalSaved / parseInt(limit))
       }
     });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+/**
+ * ============================================
+ * DOCUMENT VAULT ENDPOINTS
+ * ============================================
+ */
+
+// @route   GET /api/applicant/documents
+// @desc    Get all vault documents for the logged-in applicant
+// @access  Private
+router.get("/documents", protect, authorize("applicant"), async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user.documents || []);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// @route   POST /api/applicant/documents
+// @desc    Upload document to applicant's vault
+// @access  Private
+router.post("/documents", protect, authorize("applicant"), upload.single("file"), async (req, res) => {
+  try {
+    const { category } = req.body;
+    let name = req.body.name;
+    let url = req.body.url;
+
+    // If file is uploaded, use its properties
+    if (req.file) {
+      name = name || req.file.originalname;
+      url = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    }
+
+    if (!name) {
+      return res.status(400).json({ message: "Document name or file is required" });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.documents.push({
+      name,
+      url,
+      category: category || "resume"
+    });
+
+    await user.save();
+    
+    // Return all documents as expected by frontend
+    res.status(201).json(user.documents);
+  } catch (error) {
+    console.error("Document upload error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// @route   DELETE /api/applicant/documents/:id
+// @desc    Delete a document from applicant's vault
+// @access  Private
+router.delete("/documents/:id", protect, authorize("applicant"), async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const docToDelete = user.documents.find(doc => doc._id.toString() === req.params.id);
+    if (!docToDelete) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    // Try to delete physical file if it's hosted locally
+    if (docToDelete.url && docToDelete.url.includes("/uploads/")) {
+      const filename = docToDelete.url.split("/").pop();
+      const filePath = path.join(__dirname, "../uploads", filename);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          console.error("Failed to delete physical file:", err.message);
+        }
+      }
+    }
+
+    user.documents = user.documents.filter(doc => doc._id.toString() !== req.params.id);
+    await user.save();
+
+    res.status(200).json(user.documents);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

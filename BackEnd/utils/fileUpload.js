@@ -182,7 +182,7 @@ import { createRequire } from "module";
 
 // FIX: Create a 'require' function to load older CommonJS modules like 'pdf-parse'
 const require = createRequire(import.meta.url);
-const pdf = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -237,13 +237,23 @@ export const upload = multer({
  * Extract text from PDF file
  */
 const extractTextFromPDF = async (filePath) => {
+  let parser;
   try {
     const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdf(dataBuffer);
-    return data.text || "";
+    parser = new PDFParse({ data: new Uint8Array(dataBuffer) });
+    const result = await parser.getText();
+    return result.text || "";
   } catch (error) {
     console.error("Error extracting PDF:", error.message);
     return "";
+  } finally {
+    if (parser && typeof parser.destroy === "function") {
+      try {
+        await parser.destroy();
+      } catch (err) {
+        // ignore destroy error
+      }
+    }
   }
 };
 

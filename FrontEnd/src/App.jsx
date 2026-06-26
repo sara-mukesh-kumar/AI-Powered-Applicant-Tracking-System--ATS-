@@ -25,11 +25,13 @@ import RecruiterProfile from "./components/Recruiter/RecruiterProfile";
 import ApplicantDashboard from "./components/Applicant/ApplicantDashboard";
 import ApplicantProfile from "./components/Applicant/ApplicantProfile";
 import ApplicationTracker from "./components/Applicant/ApplicationTracker";
-import JobDetails from "./components/Applicant/JobDetails";
 import JobListings from "./components/Applicant/JobListings";
-import ResumeUpload from "./components/Applicant/ResumeUpload";
+import JobDetails from "./components/Applicant/JobDetails";
+import DocumentVault from "./components/Applicant/DocumentVault";
 import SavedJobs from "./components/Applicant/SavedJobs";
 import ApplicantLayout from "./components/Applicant/ApplicantLayout";
+import ApplicantAnalytics from "./components/Applicant/ApplicantAnalytics";
+import ApplicantPrivacy from "./components/Applicant/ApplicantPrivacy";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("token");
@@ -103,8 +105,10 @@ function App() {
           <Route path="joblisting" element={<JobListings />} />
           <Route path="jobDetails" element={<JobDetails />} />
           <Route path="tracker" element={<ApplicationTracker />} />
-          <Route path="resumeupload" element={<ResumeUpload />} />
+          <Route path="resumeupload" element={<DocumentVault />} />
           <Route path="savedjobs" element={<SavedJobs />} />
+          <Route path="analytics" element={<ApplicantAnalytics />} />
+          <Route path="privacy" element={<ApplicantPrivacy />} />
         </Route>
       </Routes>
     </BrowserRouter>

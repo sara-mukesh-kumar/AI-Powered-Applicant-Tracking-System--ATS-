@@ -1,61 +1,153 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-const stats = [
-  { label: "Applied Jobs", value: "0", helper: "No applications yet", color: "text-blue-600", background: "bg-blue-50" },
-  { label: "Interviews", value: "0", helper: "No interviews scheduled", color: "text-amber-600", background: "bg-amber-50" },
-  { label: "Offers", value: "0", helper: "No offers yet", color: "text-emerald-600", background: "bg-emerald-50" },
-];
-
-const applications = [];
-
-const recommendedJobs = [
-  { title: "MERN Stack Developer", company: "ABC Technologies", location: "Chennai", type: "Full Time", match: "92% Match" },
-  { title: "React Developer", company: "XYZ Solutions", location: "Bangalore", type: "Remote", match: "88% Match" },
-];
 
 function ApplicantDashboard() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [profile, setProfile] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await Promise.resolve();
+      try {
+        setLoading(true);
+        // 1. Fetch Profile
+        const profileRes = await fetch("http://localhost:5000/api/applicant/profile", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        let profileData = null;
+        if (profileRes.ok) {
+          profileData = await profileRes.ok ? await profileRes.json() : null;
+          setProfile(profileData);
+        }
+
+        // 2. Fetch Applications
+        const appsRes = await fetch("http://localhost:5000/api/applicant/applications", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        let appsData = [];
+        if (appsRes.ok) {
+          const resJson = await appsRes.json();
+          appsData = resJson.applications || [];
+          setApplications(appsData);
+        }
+
+        // 3. Fetch Jobs & Recommend based on skills
+        const jobsRes = await fetch("http://localhost:5000/api/jobs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (jobsRes.ok) {
+          const jobsData = await jobsRes.json();
+          const jobsList = jobsData.jobs || [];
+          // Filter matching jobs based on skills overlap
+          const userSkills = profileData?.skills || [];
+          const recommended = jobsList
+            .map(job => {
+              const matched = job.requiredSkills?.filter(s =>
+                userSkills.some(us => us.toLowerCase() === s.toLowerCase())
+              ) || [];
+              const percent = job.requiredSkills?.length
+                ? Math.round((matched.length / job.requiredSkills.length) * 100)
+                : 60;
+              return { ...job, matchPercentage: percent };
+            })
+            .sort((a, b) => b.matchPercentage - a.matchPercentage)
+            .slice(0, 4);
+          
+          setRecommendedJobs(recommended);
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  // Calculate dynamic stats
+  const totalApplied = applications.length;
+  const interviewingCount = applications.filter(a => a.status === "Interview").length;
+  const offersCount = applications.filter(a => a.status === "Offered").length;
+
+  const stats = [
+    { label: "Applied Jobs", value: totalApplied.toString(), helper: `${totalApplied} applications submitted`, color: "text-blue-600", background: "bg-blue-50" },
+    { label: "Interviews", value: interviewingCount.toString(), helper: `${interviewingCount} interviews scheduled`, color: "text-amber-600", background: "bg-amber-50" },
+    { label: "Offers Received", value: offersCount.toString(), helper: `${offersCount} offers received`, color: "text-emerald-600", background: "bg-emerald-50" },
+  ];
+
+  // Calculate profile completion progress
+  const calculateCompletion = () => {
+    if (!profile) return 60;
+    let points = 50; // base points
+    if (profile.designation && profile.designation !== "Applicant") points += 10;
+    if (profile.location) points += 10;
+    if (profile.summary) points += 10;
+    if (profile.skills && profile.skills.length > 0) points += 10;
+    if (profile.experience && profile.experience.length > 0) points += 10;
+    return Math.min(points, 100);
+  };
+
+  const completionPct = calculateCompletion();
+  const userName = profile?.name || JSON.parse(localStorage.getItem("user") || "{}").name || "Candidate";
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center p-12 text-indigo-650 font-bold">Loading dashboard...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="text-slate-900 space-y-8">
+    <div className="text-slate-900 space-y-8 animate-fade-in">
       {/* Welcome Banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 p-8 text-white shadow-xl shadow-indigo-100/40">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 p-6 sm:p-8 text-white shadow-xl">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
         <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
         
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-200">Welcome back</p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{user.name || "Applicant"}</h2>
+        <span className="bg-indigo-500/30 text-indigo-200 text-xs font-bold px-3 py-1 rounded-full border border-indigo-400/20 tracking-wider uppercase inline-block mb-3">
+          Candidate Dashboard
+        </span>
+        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Good Day, {userName}!</h2>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-indigo-100/90 font-medium">
-          Your dashboard is fully set up. Discover matching opportunities, track your ongoing applications, and manage your professional profile.
+          Manage your job hunts, monitor interview pipelines, and match with the top opportunities curated especially for you.
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+
+        {/* Quick Search Bar Shortcut */}
+        <div className="mt-6 max-w-lg bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-1.5 flex items-center shadow-inner">
+          <span className="text-indigo-200 pl-3">🔍</span>
+          <input
+            type="text"
+            placeholder="Search matching roles directly..."
+            className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-indigo-200 px-2 py-2"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") navigate("/applicant/joblisting");
+            }}
+          />
           <button
-            className="rounded-xl bg-white px-5.5 py-3 text-xs font-bold text-indigo-600 shadow-lg shadow-indigo-900/10 hover:bg-slate-50 transition cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
             onClick={() => navigate("/applicant/joblisting")}
-            type="button"
+            className="bg-white text-indigo-700 hover:bg-slate-50 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer"
           >
-            Browse Jobs
-          </button>
-          <button
-            className="rounded-xl border border-white/30 bg-white/10 px-5.5 py-3 text-xs font-bold text-white backdrop-blur-sm transition hover:bg-white/20 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-            onClick={() => navigate("/applicant/resumeupload")}
-            type="button"
-          >
-            Update Resume
+            Find Jobs
           </button>
         </div>
       </section>
 
       {/* Metrics Stats */}
-      <section className="grid gap-5 md:grid-cols-3" aria-label="Application summary">
+      <section className="grid gap-6 md:grid-cols-3" aria-label="Application summary">
         {stats.map((stat) => (
-          <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition-all duration-300" key={stat.label}>
+          <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition duration-300" key={stat.label}>
             <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${stat.background} shadow-sm`}>
-              <span className={`text-base font-bold ${stat.color}`}>{stat.value}</span>
+              <span className={`text-lg font-bold ${stat.color}`}>{stat.value}</span>
             </div>
             <p className="font-extrabold text-slate-800 text-sm">{stat.label}</p>
-            <p className="mt-1 text-xs font-medium text-slate-400">{stat.helper}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-400">{stat.helper}</p>
           </article>
         ))}
       </section>
@@ -63,33 +155,33 @@ function ApplicantDashboard() {
       {/* Middle Grid */}
       <section className="grid gap-6 lg:grid-cols-2">
         {/* Profile Completion */}
-        <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition-all duration-300">
+        <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Profile Strength</p>
               <h2 className="mt-1 text-lg font-black text-slate-800">Completion Status</h2>
             </div>
-            <span className="text-sm font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">80%</span>
+            <span className="text-sm font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">{completionPct}%</span>
           </div>
           <div className="mt-6 h-2 rounded-full bg-slate-100 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600" style={{ width: "80%" }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style={{ width: `${completionPct}%` }} />
           </div>
           <div className="mt-6 grid gap-2.5 text-xs text-slate-500 font-semibold sm:grid-cols-2">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-500">✓</span> Personal details added
+              <span className={profile?.name ? "text-emerald-500" : "text-slate-300"}>✓</span> Name verified
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-emerald-500">✓</span> Professional skills updated
+              <span className={profile?.skills?.length > 0 ? "text-emerald-500" : "text-slate-300"}>✓</span> Professional skills updated
             </div>
-            <div className="flex items-center gap-2 text-amber-600">
-              <span className="animate-pulse">●</span> Resume needs update
+            <div className="flex items-center gap-2">
+              <span className={profile?.resumeUrl ? "text-emerald-500" : "text-slate-300"}>✓</span> Resume uploaded
             </div>
-            <div className="flex items-center gap-2 text-amber-600">
-              <span className="animate-pulse">●</span> LinkedIn integration missing
+            <div className="flex items-center gap-2">
+              <span className={profile?.experience?.length > 0 ? "text-emerald-500" : "text-slate-300"}>✓</span> Work history updated
             </div>
           </div>
           <button
-            className="mt-6 w-full rounded-xl bg-indigo-50 py-3 text-xs font-bold text-indigo-600 hover:bg-indigo-100/80 transition cursor-pointer"
+            className="mt-6 w-full rounded-2xl bg-indigo-50 py-3 text-xs font-bold text-indigo-600 hover:bg-indigo-100/80 transition cursor-pointer"
             onClick={() => navigate("/applicant/profile")}
             type="button"
           >
@@ -97,40 +189,33 @@ function ApplicantDashboard() {
           </button>
         </article>
 
-        {/* Profile Views Charts */}
-        <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition-all duration-300">
+        {/* Profile Views Chart */}
+        <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition duration-300">
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Performance</p>
           <h2 className="mt-1 text-lg font-black text-slate-800">Profile Visibility</h2>
           <div className="mt-6">
             <div className="flex items-end gap-2.5 h-16">
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-8 w-full bg-indigo-50 hover:bg-indigo-100 rounded-lg transition" title="Mon: 4 views"></div>
-                <span className="text-[10px] font-bold text-slate-400">M</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-10 w-full bg-indigo-100 hover:bg-indigo-200 rounded-lg transition" title="Tue: 6 views"></div>
-                <span className="text-[10px] font-bold text-slate-400">T</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-6 w-full bg-indigo-50 hover:bg-indigo-100 rounded-lg transition" title="Wed: 3 views"></div>
-                <span className="text-[10px] font-bold text-slate-400">W</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-16 w-full bg-gradient-to-t from-indigo-500 to-indigo-600 rounded-lg shadow-sm" title="Thu: 8 views"></div>
-                <span className="text-[10px] font-bold text-indigo-600">T</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-14 w-full bg-indigo-400 hover:bg-indigo-500 rounded-lg transition" title="Fri: 7 views"></div>
-                <span className="text-[10px] font-bold text-slate-400">F</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-12 w-full bg-indigo-200 hover:bg-indigo-300 rounded-lg transition" title="Sat: 5 views"></div>
-                <span className="text-[10px] font-bold text-slate-400">S</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="h-8 w-full bg-indigo-50 hover:bg-indigo-100 rounded-lg transition" title="Sun: 4 views"></div>
-                <span className="text-[10px] font-bold text-slate-400">S</span>
-              </div>
+              {[
+                { label: "M", h: "h-8", views: 4 },
+                { label: "T", h: "h-10", views: 6 },
+                { label: "W", h: "h-6", views: 3 },
+                { label: "T", h: "h-16", views: 8, active: true },
+                { label: "F", h: "h-14", views: 7 },
+                { label: "S", h: "h-12", views: 5 },
+                { label: "S", h: "h-8", views: 4 }
+              ].map((item, index) => (
+                <div key={index} className="flex flex-col items-center gap-1.5 flex-1">
+                  <div
+                    className={`w-full rounded-lg transition-all duration-300 ${
+                      item.active ? "bg-gradient-to-t from-indigo-500 to-indigo-600 shadow-sm" : "bg-indigo-50 hover:bg-indigo-100"
+                    } ${item.h}`}
+                    title={`${item.views} recruiter views`}
+                  />
+                  <span className={`text-[10px] font-bold ${item.active ? "text-indigo-600" : "text-slate-400"}`}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
             </div>
             <div className="mt-5 flex items-center gap-6">
               <div>
@@ -148,43 +233,40 @@ function ApplicantDashboard() {
 
       {/* Schedules and Inquiries */}
       <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition-all duration-300">
+        {/* Interviews */}
+        <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition duration-300">
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Schedule</p>
           <h2 className="mt-1 text-lg font-black text-slate-800">Upcoming Interviews</h2>
           <div className="mt-5 space-y-3">
-            <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4 hover:shadow-sm transition">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-extrabold text-sm text-slate-850">Frontend Developer</h3>
-                  <p className="mt-1 text-xs font-semibold text-slate-400">XYZ Solutions</p>
+            {applications.filter(a => a.status === "Interview").length > 0 ? (
+              applications.filter(a => a.status === "Interview").map((app, idx) => (
+                <div key={idx} className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4 hover:shadow-sm transition">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-extrabold text-sm text-slate-800">{app.jobId?.title || "Role"}</h3>
+                      <p className="mt-1 text-xs font-semibold text-slate-400">{app.jobId?.company || "Recruiting Firm"}</p>
+                    </div>
+                    <span className="text-[10px] font-extrabold text-amber-700 bg-amber-100/60 px-2.5 py-1 rounded-md">Scheduled</span>
+                  </div>
+                  <p className="mt-3 text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                    <span>🕒</span> Date to be shared by Recruiter
+                  </p>
                 </div>
-                <span className="text-[10px] font-extrabold text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded-md">June 12</span>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-slate-450 font-medium">
+                No interviews scheduled yet. Keep applying!
               </div>
-              <p className="mt-3 text-xs font-bold text-slate-650 flex items-center gap-1.5">
-                <span>🕒</span> 10:00 AM · Video interview
-              </p>
-            </div>
-            <div className="rounded-2xl border border-indigo-50 bg-indigo-50/20 p-4 hover:shadow-sm transition">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-extrabold text-sm text-slate-850">React Developer</h3>
-                  <p className="mt-1 text-xs font-semibold text-slate-400">Pixel Labs</p>
-                </div>
-                <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-100/60 px-2 py-0.5 rounded-md">June 15</span>
-              </div>
-              <p className="mt-3 text-xs font-bold text-slate-650 flex items-center gap-1.5">
-                <span>🕒</span> 2:00 PM · Technical round
-              </p>
-            </div>
+            )}
           </div>
         </article>
 
         {/* Message Inquiries */}
-        <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition-all duration-300">
+        <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition duration-300">
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Messages</p>
           <h2 className="mt-1 text-lg font-black text-slate-800">Recent Inquiries</h2>
           <div className="mt-5 space-y-3">
-            <div className="flex items-center gap-3.5 rounded-xl border border-slate-100/60 bg-slate-50/40 p-3 hover:bg-slate-50 hover:shadow-sm transition cursor-pointer">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-100/60 bg-slate-50/40 p-3 hover:bg-slate-50 hover:shadow-sm transition cursor-pointer">
               <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 text-xs font-black text-indigo-600 border border-indigo-100/40">
                 AB
               </div>
@@ -194,7 +276,7 @@ function ApplicantDashboard() {
               </div>
               <span className="text-[10px] font-bold text-slate-400 shrink-0">2h ago</span>
             </div>
-            <div className="flex items-center gap-3.5 rounded-xl border border-slate-100/60 bg-slate-50/40 p-3 hover:bg-slate-50 hover:shadow-sm transition cursor-pointer">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-100/60 bg-slate-50/40 p-3 hover:bg-slate-50 hover:shadow-sm transition cursor-pointer">
               <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 text-xs font-black text-indigo-600 border border-indigo-100/40">
                 PL
               </div>
@@ -205,17 +287,11 @@ function ApplicantDashboard() {
               <span className="text-[10px] font-bold text-slate-400 shrink-0">5h ago</span>
             </div>
           </div>
-          <button
-            className="mt-5 w-full rounded-xl border border-slate-100 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-            type="button"
-          >
-            View All Messages
-          </button>
         </article>
       </section>
 
       {/* Recent Applications table */}
-      <section className="overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-100/60">
+      <section className="overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-100/60">
         <div className="flex items-center justify-between border-b border-slate-100 p-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Tracking</p>
@@ -236,13 +312,18 @@ function ApplicantDashboard() {
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
               {applications.length > 0 ? (
-                applications.map((application) => (
-                  <tr className="transition hover:bg-slate-50/50" key={application.job}>
-                    <td className="px-6 py-4 font-bold text-slate-900">{application.job}</td>
-                    <td className="px-6 py-4 text-slate-500">{application.company}</td>
-                    <td className="px-6 py-4 text-slate-400">{application.date}</td>
+                applications.slice(0, 5).map((app) => (
+                  <tr className="transition hover:bg-slate-50/50" key={app._id}>
+                    <td className="px-6 py-4 font-bold text-slate-900">{app.jobId?.title || "Role"}</td>
+                    <td className="px-6 py-4 text-slate-500">{app.jobId?.company || "Recruiter"}</td>
+                    <td className="px-6 py-4 text-slate-400">{new Date(app.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${application.style}`}>{application.status}</span>
+                      <span className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${
+                        app.status === "Interview" ? "bg-amber-50 text-amber-700 border border-amber-100" :
+                        app.status === "Offered" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
+                        app.status === "Rejected" ? "bg-rose-50 text-rose-700 border border-rose-100" :
+                        "bg-blue-50 text-blue-700 border border-blue-100"
+                      }`}>{app.status}</span>
                     </td>
                   </tr>
                 ))
@@ -270,30 +351,38 @@ function ApplicantDashboard() {
           </button>
         </div>
         <div className="grid gap-5 md:grid-cols-2">
-          {recommendedJobs.map((job) => (
-            <article className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col justify-between" key={job.title}>
-              <div>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-base font-extrabold text-slate-950">{job.title}</h3>
-                    <p className="mt-1 text-xs font-bold text-slate-400">{job.company}</p>
+          {recommendedJobs.length > 0 ? (
+            recommendedJobs.map((job) => (
+              <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col justify-between" key={job._id}>
+                <div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-950">{job.title}</h3>
+                      <p className="mt-1 text-xs font-bold text-slate-450">{job.recruiterId?.name || "Recruiter Team"}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-indigo-50 px-2.5 py-1 text-[10px] font-extrabold text-indigo-600 border border-indigo-100/30">
+                      {job.matchPercentage}% Match
+                    </span>
                   </div>
-                  <span className="shrink-0 rounded-lg bg-indigo-50 px-2.5 py-1 text-[10px] font-extrabold text-indigo-600 border border-indigo-100/30">{job.match}</span>
+                  <div className="mt-4 flex gap-2 text-xs font-semibold text-slate-500">
+                    <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100">{job.location || "Remote"}</span>
+                    <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100">{job.experienceLevel || "Mid Level"}</span>
+                  </div>
                 </div>
-                <div className="mt-4 flex gap-2 text-xs font-semibold text-slate-500">
-                  <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100">{job.location}</span>
-                  <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 border border-slate-100">{job.type}</span>
-                </div>
-              </div>
-              <button
-                className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-lg shadow-indigo-600/10 hover:bg-indigo-700 transition cursor-pointer hover:shadow-indigo-600/20"
-                onClick={() => navigate("/applicant/jobDetails")}
-                type="button"
-              >
-                View Details
-              </button>
-            </article>
-          ))}
+                <button
+                  className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-lg shadow-indigo-600/10 hover:bg-indigo-700 transition cursor-pointer hover:shadow-indigo-600/20"
+                  onClick={() => navigate("/applicant/joblisting")}
+                  type="button"
+                >
+                  View Job Details
+                </button>
+              </article>
+            ))
+          ) : (
+            <div className="col-span-2 rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-450 font-medium">
+              No matching recommended jobs. Add more skills to your profile to get recommended roles!
+            </div>
+          )}
         </div>
       </section>
     </div>

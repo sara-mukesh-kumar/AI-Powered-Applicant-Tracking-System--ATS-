@@ -7,10 +7,39 @@ function ApplicantApplicationModal({ job, onClose }) {
     : null;
   const [note, setNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
-
-  const submitApplication = (event) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+ 
+  const submitApplication = async (event) => {
     event.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setError("");
+
+    const token = localStorage.getItem("token");
+    const jobId = job.id || job._id;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/applicant/apply/${jobId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ note })
+      });
+
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        const errJson = await res.json();
+        setError(errJson.message || "Failed to submit application");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Server error while applying for job.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -87,19 +116,25 @@ function ApplicantApplicationModal({ job, onClose }) {
             />
             <p className="mt-1 text-right text-xs text-slate-400">{note.length}/500</p>
 
+            {error && (
+              <p className="mt-4 text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-150">{error}</p>
+            )}
+
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
                 onClick={onClose}
                 type="button"
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
-                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:bg-slate-350 disabled:cursor-not-allowed"
                 type="submit"
+                disabled={isSubmitting}
               >
-                Submit Application
+                {isSubmitting ? "Applying..." : "Submit Application"}
               </button>
             </div>
           </form>

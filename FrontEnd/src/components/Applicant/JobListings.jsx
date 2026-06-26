@@ -58,7 +58,8 @@ function JobListings() {
         const response = await axios.get("http://localhost:5000/api/jobs", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setJobs(response.data.map(mapJobFromApi));
+        const jobsList = response.data.jobs || [];
+        setJobs(jobsList.map(mapJobFromApi));
       } catch (apiError) {
         setError(apiError.response?.data?.message || "Unable to load jobs from the server.");
       } finally {

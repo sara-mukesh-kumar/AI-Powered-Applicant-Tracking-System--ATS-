@@ -1,623 +1,181 @@
-// import { useState, useEffect } from "react";
-// import { applicantAPI } from "../../services/api";
-
-// function ProfileField({ label, name, value, onChange, type = "text" }) {
-//   return (
-//     <label className="block">
-//       <span className="text-sm font-bold text-slate-600">{label}</span>
-//       <input
-//         className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-//         name={name}
-//         onChange={onChange}
-//         type={type}
-//         value={value}
-//       />
-//     </label>
-//   );
-// }
-
-// function ApplicantProfile() {
-//   const [userProfile, setUserProfile] = useState(null);
-//   const [draft, setDraft] = useState(null);
-//   const [editing, setEditing] = useState(false);
-//   const [saved, setSaved] = useState(false);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-//   const [downloading, setDownloading] = useState(false);
-
-//   // Fetch profile on mount
-//   useEffect(() => {
-//     const fetchProfile = async () => {
-//       try {
-//         setLoading(true);
-//         const response = await applicantAPI.getProfile();
-//         setUserProfile(response.data);
-//         setDraft(response.data);
-//       } catch (err) {
-//         setError("Failed to load profile");
-//         console.error("Error:", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchProfile();
-//   }, []);
-
-//   const handleDownloadResume = async () => {
-//     if (!userProfile?.resumeUrl) {
-//       setError("No resume uploaded yet");
-//       return;
-//     }
-
-//     try {
-//       setDownloading(true);
-//       const filename = userProfile.resumeUrl.split("/").pop();
-//       const response = await applicantAPI.downloadResume(filename);
-      
-//       // Create blob URL and download
-//       const url = window.URL.createObjectURL(new Blob([response.data]));
-//       const link = document.createElement("a");
-//       link.href = url;
-//       link.setAttribute("download", filename);
-//       document.body.appendChild(link);
-//       link.click();
-//       link.parentNode.removeChild(link);
-//       window.URL.revokeObjectURL(url);
-//     } catch (err) {
-//       setError("Failed to download resume");
-//       console.error("Download error:", err);
-//     } finally {
-//       setDownloading(false);
-//     }
-//   };
-
-//   const updateDraft = (event) => {
-//     const { name, value } = event.target;
-//     setDraft((current) => ({ ...current, [name]: value }));
-//   };
-
-//   const startEditing = () => {
-//     setDraft(userProfile);
-//     setSaved(false);
-//     setEditing(true);
-//   };
-
-//   const cancelEditing = () => {
-//     setDraft(userProfile);
-//     setEditing(false);
-//   };
-
-//   const saveProfile = async (event) => {
-//     event.preventDefault();
-//     try {
-//       setLoading(true);
-//       const response = await applicantAPI.updateProfile(draft);
-//       setUserProfile(response.data);
-//       setEditing(false);
-//       setSaved(true);
-//       setTimeout(() => setSaved(false), 3000);
-//     } catch (err) {
-//       setError("Failed to save profile");
-//       console.error("Error:", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex items-center justify-center py-12">
-//         <div className="text-slate-500">Loading profile...</div>
-//       </div>
-//     );
-//   }
-
-//   if (!userProfile) {
-//     return (
-//       <div className="text-slate-900">
-//         <div className="text-center py-12">
-//           <p className="text-red-600">{error || "Unable to load profile"}</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   const initials = (userProfile.name || "MK")
-//     .split(" ")
-//     .filter(Boolean)
-//     .slice(0, 2)
-//     .map((part) => part[0])
-//     .join("")
-//     .toUpperCase();
-
-//   return (
-//     <div className="text-slate-900">
-//       <div className="mx-auto max-w-7xl">
-//         <section className="relative mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
-//           <div className="h-36 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900" />
-//           <div className="absolute right-6 top-6 rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white backdrop-blur">
-//             Open to work
-//           </div>
-//           <div className="px-6 pb-7 sm:px-8">
-//             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-//               <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-//                 <div className="-mt-14 flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-bold text-blue-700 shadow-md">
-//                   {initials}
-//                 </div>
-//                 <div className="pt-4 sm:pt-5">
-//                   <h2 className="text-3xl font-bold tracking-tight">{userProfile.name}</h2>
-//                   <p className="mt-1 text-lg text-slate-500">{userProfile.role || "Applicant"}</p>
-//                   <p className="mt-2 text-sm font-semibold text-blue-600">{userProfile.location || "Not specified"}</p>
-//                 </div>
-//               </div>
-//               {!editing && (
-//                 <button
-//                   className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-//                   onClick={startEditing}
-//                   type="button"
-//                 >
-//                   Edit Profile
-//                 </button>
-//               )}
-//             </div>
-//           </div>
-//         </section>
-
-//         {saved && (
-//           <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 font-semibold text-emerald-700">
-//             ✅ Profile changes saved successfully.
-//           </div>
-//         )}
-
-//         {error && (
-//           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 font-semibold text-red-700">
-//             ❌ {error}
-//           </div>
-//         )}
-
-//         {editing ? (
-//           <form className="rounded-3xl bg-white p-6 shadow-sm sm:p-8" onSubmit={saveProfile}>
-//             <div className="border-b border-slate-200 pb-5">
-//               <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Edit details</p>
-//               <h2 className="mt-1 text-2xl font-bold">Personal Information</h2>
-//               <p className="mt-2 text-slate-500">Update the information recruiters see on your profile.</p>
-//             </div>
-
-//             <div className="mt-6 grid gap-5 md:grid-cols-2">
-//               <ProfileField label="Full Name" name="name" onChange={updateDraft} value={draft.name || ""} />
-//               <ProfileField label="Email Address" name="email" onChange={updateDraft} type="email" value={draft.email || ""} />
-//               <ProfileField label="Phone Number" name="phone" onChange={updateDraft} type="tel" value={draft.phone || ""} />
-//               <div className="md:col-span-2">
-//                 <ProfileField label="Location" name="location" onChange={updateDraft} value={draft.location || ""} />
-//               </div>
-//             </div>
-
-//             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-//               <button
-//                 className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
-//                 onClick={cancelEditing}
-//                 type="button"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-//                 type="submit"
-//                 disabled={loading}
-//               >
-//                 {loading ? "Saving..." : "Save Changes"}
-//               </button>
-//             </div>
-//           </form>
-//         ) : (
-//           <div className="grid gap-6 lg:grid-cols-[0.8fr_2fr]">
-//             <aside className="space-y-6">
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <div className="mb-3 flex items-center justify-between">
-//                   <h2 className="text-lg font-bold">Profile Strength</h2>
-//                   <span className="font-bold text-blue-600">
-//                     {userProfile.skills?.length > 0 ? "80%" : "60%"}
-//                   </span>
-//                 </div>
-//                 <div className="h-2.5 rounded-full bg-slate-200">
-//                   <div 
-//                     className="h-2.5 rounded-full bg-blue-600 transition-all"
-//                     style={{
-//                       width: userProfile.skills?.length > 0 ? "80%" : "60%"
-//                     }}
-//                   />
-//                 </div>
-//                 <p className="mt-3 text-sm leading-6 text-slate-500">
-//                   {userProfile.resumeUrl ? "✅ Resume uploaded" : "Upload your resume to complete your profile."}
-//                 </p>
-//               </section>
-
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Contact</p>
-//                 <div className="mt-5 space-y-5 text-sm">
-//                   {[
-//                     ["Email", userProfile.email],
-//                     ["Phone", userProfile.phone || "Not specified"],
-//                     ["Location", userProfile.location || "Not specified"]
-//                   ].map(
-//                     ([label, value]) => (
-//                       <div key={label}>
-//                         <p className="font-bold text-slate-400">{label}</p>
-//                         <p className="mt-1 break-words font-medium text-slate-700">{value}</p>
-//                       </div>
-//                     )
-//                   )}
-//                 </div>
-//               </section>
-
-//               {userProfile.resumeUrl && (
-//                 <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                   <p className="text-sm font-bold uppercase tracking-wider text-green-600">Resume</p>
-//                   <div className="mt-3 space-y-3">
-//                     <p className="text-sm text-slate-600">✅ Resume uploaded</p>
-//                     <button
-//                       onClick={handleDownloadResume}
-//                       disabled={downloading}
-//                       className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:bg-gray-400"
-//                     >
-//                       {downloading ? "Downloading..." : "📥 Download Resume"}
-//                     </button>
-//                   </div>
-//                 </section>
-//               )}
-//             </aside>
-
-//             <div className="space-y-6">
-//               {userProfile.skills && userProfile.skills.length > 0 && (
-//                 <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                   <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Expertise</p>
-//                   <h2 className="mt-1 text-xl font-bold">Skills</h2>
-//                   <div className="mt-4 flex flex-wrap gap-2">
-//                     {userProfile.skills.map((skill, idx) => (
-//                       <span 
-//                         key={idx}
-//                         className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700"
-//                       >
-//                         {skill}
-//                       </span>
-//                     ))}
-//                   </div>
-//                 </section>
-//               )}
-
-//               {userProfile.experience && userProfile.experience.length > 0 && (
-//                 <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-//                     <div>
-//                       <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Experience</p>
-//                       <h2 className="mt-1 text-xl font-bold">Work History</h2>
-//                     </div>
-//                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
-//                       {userProfile.experience.length} role(s)
-//                     </span>
-//                   </div>
-//                   <div className="mt-5 space-y-4 border-l-2 border-blue-200 pl-5">
-//                     {userProfile.experience.map((exp, idx) => (
-//                       <div key={idx}>
-//                         <div className="flex flex-col justify-between gap-1 sm:flex-row">
-//                           <div>
-//                             <h3 className="font-bold">{exp.title || "Position"}</h3>
-//                             <p className="text-slate-500">{exp.company || "Company"}</p>
-//                           </div>
-//                           <span className="text-sm font-semibold text-blue-600">{exp.duration || ""}</span>
-//                         </div>
-//                         {exp.description && (
-//                           <p className="mt-3 text-sm leading-6 text-slate-600">{exp.description}</p>
-//                         )}
-//                       </div>
-//                     ))}
-//                   </div>
-//                 </section>
-//               )}
-
-//               {userProfile.education && userProfile.education.length > 0 && (
-//                 <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-//                     <div>
-//                       <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Education</p>
-//                       <h2 className="mt-1 text-xl font-bold">Academic Background</h2>
-//                     </div>
-//                   </div>
-//                   <div className="mt-5 space-y-4">
-//                     {userProfile.education.map((edu, idx) => (
-//                       <div key={idx} className="border-l-2 border-purple-200 pl-4">
-//                         <h3 className="font-bold">{edu.degree || "Degree"}</h3>
-//                         <p className="text-slate-500">{edu.school || "School"}</p>
-//                         {edu.duration && (
-//                           <p className="text-sm font-semibold text-purple-600 mt-1">{edu.duration}</p>
-//                         )}
-//                       </div>
-//                     ))}
-//                   </div>
-//                 </section>
-//               )}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default ApplicantProfile;
-//               {!editing && (
-//                 <button
-//                   className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-//                   onClick={startEditing}
-//                   type="button"
-//                 >
-//                   Edit Profile
-//                 </button>
-//               )}
-//             </div>
-//           </div>
-//         </section>
-
-//         {saved && (
-//           <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 font-semibold text-emerald-700">
-//             Profile changes saved successfully.
-//           </div>
-//         )}
-
-//         {editing ? (
-//           <form className="rounded-3xl bg-white p-6 shadow-sm sm:p-8" onSubmit={saveProfile}>
-//             <div className="border-b border-slate-200 pb-5">
-//               <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Edit details</p>
-//               <h2 className="mt-1 text-2xl font-bold">Personal Information</h2>
-//               <p className="mt-2 text-slate-500">Update the information recruiters see on your profile.</p>
-//             </div>
-
-//             <div className="mt-6 grid gap-5 md:grid-cols-2">
-//               <ProfileField label="Full Name" name="name" onChange={updateDraft} value={draft.name} />
-//               <ProfileField label="Professional Title" name="role" onChange={updateDraft} value={draft.role} />
-//               <ProfileField label="Email Address" name="email" onChange={updateDraft} type="email" value={draft.email} />
-//               <ProfileField label="Phone Number" name="phone" onChange={updateDraft} type="tel" value={draft.phone} />
-//               <div className="md:col-span-2">
-//                 <ProfileField label="Location" name="location" onChange={updateDraft} value={draft.location} />
-//               </div>
-//               <label className="block md:col-span-2">
-//                 <span className="text-sm font-bold text-slate-600">Professional Summary</span>
-//                 <textarea
-//                   className="mt-2 min-h-36 w-full rounded-xl border border-slate-300 p-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-//                   name="summary"
-//                   onChange={updateDraft}
-//                   value={draft.summary}
-//                 />
-//               </label>
-//             </div>
-
-//             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-//               <button
-//                 className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
-//                 onClick={cancelEditing}
-//                 type="button"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-//                 type="submit"
-//               >
-//                 Save Changes
-//               </button>
-//             </div>
-//           </form>
-//         ) : (
-//           <div className="grid gap-6 lg:grid-cols-[0.8fr_2fr]">
-//             <aside className="space-y-6">
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <div className="mb-3 flex items-center justify-between">
-//                   <h2 className="text-lg font-bold">Profile Strength</h2>
-//                   <span className="font-bold text-blue-600">80%</span>
-//                 </div>
-//                 <div className="h-2.5 rounded-full bg-slate-200">
-//                   <div className="h-2.5 w-4/5 rounded-full bg-blue-600" />
-//                 </div>
-//                 <p className="mt-3 text-sm leading-6 text-slate-500">
-//                   Add LinkedIn and update your resume to complete your profile.
-//                 </p>
-//               </section>
-
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Contact</p>
-//                 <div className="mt-5 space-y-5 text-sm">
-//                   {[["Email", profile.email], ["Phone", profile.phone], ["Location", profile.location]].map(
-//                     ([label, value]) => (
-//                       <div key={label}>
-//                         <p className="font-bold text-slate-400">{label}</p>
-//                         <p className="mt-1 break-words font-medium text-slate-700">{value}</p>
-//                       </div>
-//                     )
-//                   )}
-//                 </div>
-//               </section>
-//             </aside>
-
-//             <div className="space-y-6">
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <p className="text-sm font-bold uppercase tracking-wider text-blue-600">About</p>
-//                 <h2 className="mt-1 text-xl font-bold">Professional Summary</h2>
-//                 <p className="mt-4 leading-7 text-slate-600">{profile.summary}</p>
-//               </section>
-
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Expertise</p>
-//                 <h2 className="mt-1 text-xl font-bold">Skills</h2>
-//                 <div className="mt-4 flex flex-wrap gap-2">
-//                   {skills.map((skill) => (
-//                     <span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700" key={skill}>
-//                       {skill}
-//                     </span>
-//                   ))}
-//                 </div>
-//               </section>
-
-//               <section className="rounded-2xl bg-white p-6 shadow-sm">
-//                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-//                   <div>
-//                     <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Experience</p>
-//                     <h2 className="mt-1 text-xl font-bold">Work History</h2>
-//                   </div>
-//                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
-//                     2 years
-//                   </span>
-//                 </div>
-//                 <div className="mt-5 border-l-2 border-blue-200 pl-5">
-//                   <div className="flex flex-col justify-between gap-1 sm:flex-row">
-//                     <div>
-//                       <h3 className="font-bold">Frontend Developer</h3>
-//                       <p className="text-slate-500">Digital Solutions Pvt. Ltd.</p>
-//                     </div>
-//                     <span className="text-sm font-semibold text-blue-600">2024 - Present</span>
-//                   </div>
-//                   <p className="mt-3 text-sm leading-6 text-slate-600">
-//                     Built responsive React interfaces and collaborated on reusable product components.
-//                   </p>
-//                 </div>
-//               </section>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default ApplicantProfile;
-
-
-import { useState, useEffect } from "react";
-import { applicantAPI } from "../../services/api";
-
-function ProfileField({ label, name, value, onChange, type = "text" }) {
-  return (
-    <label className="block">
-      <span className="text-sm font-bold text-slate-600">{label}</span>
-      <input
-        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-        name={name}
-        onChange={onChange}
-        type={type}
-        value={value}
-      />
-    </label>
-  );
-}
+import { useState, useEffect, useRef } from "react";
 
 function ApplicantProfile() {
-  const [userProfile, setUserProfile] = useState(null);
-  const [draft, setDraft] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [downloading, setDownloading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [editingField, setEditingField] = useState(null); // 'profile' or null
 
-  // Fetch profile on mount
+  // Draft states for new additions
+  const [newExp, setNewExp] = useState({ company: "", title: "", duration: "", description: "" });
+  const [newEdu, setNewEdu] = useState({ degree: "", school: "", duration: "" });
+  const [skillInput, setSkillInput] = useState("");
+
+  // Edit states for details
+  const [profileDraft, setProfileDraft] = useState({});
+
+  const fileInputRef = useRef(null);
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     const fetchProfile = async () => {
+      await Promise.resolve();
       try {
         setLoading(true);
-        const response = await applicantAPI.getProfile();
-        setUserProfile(response.data);
-        setDraft(response.data);
+        const res = await fetch("http://localhost:5000/api/applicant/profile", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data);
+          setProfileDraft(data);
+        } else {
+          throw new Error("Failed to load profile");
+        }
       } catch (err) {
-        setError("Failed to load profile");
-        console.error("Error:", err);
+        setError(err.message);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [token]);
 
-  const handleDownloadResume = async () => {
-    if (!userProfile?.resumeUrl) {
-      setError("No resume uploaded yet");
-      return;
+  const handleUpdateProfile = async (updatedFields) => {
+    try {
+      setError("");
+      const res = await fetch("http://localhost:5000/api/applicant/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedFields)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data);
+        setProfileDraft(data);
+        setSuccess("Profile updated successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        throw new Error("Update failed");
+      }
+    } catch (err) {
+      setError(err.message);
     }
+  };
+
+  // Toggle Open to Work
+  const handleToggleOpenToWork = () => {
+    const currentPrivacy = profile?.privacy || {};
+    const newOpenToWork = !(currentPrivacy.openToWork ?? true);
+    handleUpdateProfile({
+      privacy: {
+        ...currentPrivacy,
+        openToWork: newOpenToWork
+      }
+    });
+  };
+
+  // Handle Resume Upload
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError("");
+    setSuccess("");
+
+    const formData = new FormData();
+    formData.append("resume", file);
 
     try {
-      setDownloading(true);
-      const filename = userProfile.resumeUrl.split("/").pop();
-      const response = await applicantAPI.downloadResume(filename);
-      
-      // Create blob URL and download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const res = await fetch("http://localhost:5000/api/applicant/upload-resume", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data.user);
+        setProfileDraft(data.user);
+        setSuccess("Resume parsed successfully! Skills extracted.");
+        setTimeout(() => setSuccess(""), 4000);
+      } else {
+        const errJson = await res.json();
+        throw new Error(errJson.message || "Failed to upload resume");
+      }
     } catch (err) {
-      setError("Failed to download resume");
-      console.error("Download error:", err);
+      setError(err.message);
     } finally {
-      setDownloading(false);
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const updateDraft = (event) => {
-    const { name, value } = event.target;
-    setDraft((current) => ({ ...current, [name]: value }));
-  };
-
-  const startEditing = () => {
-    setDraft(userProfile);
-    setSaved(false);
-    setEditing(true);
-  };
-
-  const cancelEditing = () => {
-    setDraft(userProfile);
-    setEditing(false);
-  };
-
-  const saveProfile = async (event) => {
-    event.preventDefault();
-    try {
-      setLoading(true);
-      const response = await applicantAPI.updateProfile(draft);
-      setUserProfile(response.data);
-      setEditing(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      setError("Failed to save profile");
-      console.error("Error:", err);
-    } finally {
-      setLoading(false);
+  // Skills handlers
+  const handleAddSkill = (e) => {
+    if (e.key === "Enter" && skillInput.trim()) {
+      e.preventDefault();
+      const currentSkills = profile?.skills || [];
+      if (!currentSkills.includes(skillInput.trim())) {
+        const updated = [...currentSkills, skillInput.trim()];
+        handleUpdateProfile({ skills: updated });
+      }
+      setSkillInput("");
     }
   };
 
-  if (loading) {
+  const handleRemoveSkill = (skillToRemove) => {
+    const updated = (profile?.skills || []).filter(s => s !== skillToRemove);
+    handleUpdateProfile({ skills: updated });
+  };
+
+  // Experience handlers
+  const handleAddExperience = () => {
+    if (!newExp.company || !newExp.title) return;
+    const currentExp = profile?.experience || [];
+    const updated = [...currentExp, newExp];
+    handleUpdateProfile({ experience: updated });
+    setNewExp({ company: "", title: "", duration: "", description: "" });
+  };
+
+  const handleRemoveExperience = (idx) => {
+    const updated = (profile?.experience || []).filter((_, i) => i !== idx);
+    handleUpdateProfile({ experience: updated });
+  };
+
+  // Education handlers
+  const handleAddEducation = () => {
+    if (!newEdu.degree || !newEdu.school) return;
+    const currentEdu = profile?.education || [];
+    const updated = [...currentEdu, newEdu];
+    handleUpdateProfile({ education: updated });
+    setNewEdu({ degree: "", school: "", duration: "" });
+  };
+
+  const handleRemoveEducation = (idx) => {
+    const updated = (profile?.education || []).filter((_, i) => i !== idx);
+    handleUpdateProfile({ education: updated });
+  };
+
+  if (loading && !profile) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-slate-500">Loading profile...</div>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-slate-500 font-bold">Loading candidate profile...</div>
       </div>
     );
   }
 
-  if (!userProfile) {
-    return (
-      <div className="text-slate-900">
-        <div className="text-center py-12">
-          <p className="text-red-600">{error || "Unable to load profile"}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const initials = (userProfile.name || "MK")
+  const initials = (profile?.name || "MK")
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
@@ -626,232 +184,337 @@ function ApplicantProfile() {
     .toUpperCase();
 
   return (
-    <div className="text-slate-900">
-      <div className="mx-auto max-w-7xl">
-        <section className="relative mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
-          <div className="h-36 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900" />
-          <div className="absolute right-6 top-6 rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white backdrop-blur">
-            Open to work
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in">
+
+      {/* Alert overlays */}
+      {success && (
+        <div className="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl shadow-xl z-50 text-sm font-bold border border-emerald-500/20">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="fixed bottom-6 right-6 bg-rose-600 text-white px-6 py-3.5 rounded-2xl shadow-xl z-50 text-sm font-bold border border-rose-500/20">
+          {error}
+        </div>
+      )}
+
+      {/* Profile Header */}
+      <section className="relative overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-100">
+        <div className="h-40 bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-950" />
+
+        {/* Open to Work Toggle Header */}
+        <div className="absolute right-6 top-6 flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-2xl">
+          <span className="text-xs font-black uppercase text-white tracking-wider">Open To Work</span>
+          <button
+            onClick={handleToggleOpenToWork}
+            className={`w-11 h-6 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-200 focus:outline-none ${profile?.privacy?.openToWork ?? true ? "bg-emerald-500" : "bg-slate-500"
+              }`}
+          >
+            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform duration-200 ${profile?.privacy?.openToWork ?? true ? "translate-x-5" : "translate-x-0"
+              }`} />
+          </button>
+        </div>
+
+        <div className="px-6 pb-8 sm:px-8 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div className="-mt-16 flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl border-4 border-white bg-indigo-50 text-4xl font-black text-indigo-700 shadow-md">
+              {initials}
+            </div>
+            <div className="pt-2 sm:pt-4">
+              <h2 className="text-3xl font-black tracking-tight text-slate-900">{profile?.name}</h2>
+              <p className="mt-1 text-base font-semibold text-slate-500">{profile?.designation || "Applicant"}</p>
+              <p className="mt-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg w-fit">
+                📍 {profile?.location || "Location not added"}
+              </p>
+            </div>
           </div>
-          <div className="px-6 pb-7 sm:px-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="-mt-14 flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-bold text-blue-700 shadow-md">
-                  {initials}
-                </div>
-                <div className="pt-4 sm:pt-5">
-                  <h2 className="text-3xl font-bold tracking-tight">{userProfile.name}</h2>
-                  <p className="mt-1 text-lg text-slate-500">{userProfile.role || "Applicant"}</p>
-                  <p className="mt-2 text-sm font-semibold text-blue-600">{userProfile.location || "Not specified"}</p>
-                </div>
+
+          <button
+            onClick={() => setEditingField(editingField === "profile" ? null : "profile")}
+            className="rounded-2xl border border-slate-200 hover:border-indigo-500 hover:text-indigo-600 font-bold px-6 py-3 text-xs tracking-wider transition cursor-pointer"
+          >
+            {editingField === "profile" ? "Cancel Edit" : "Edit Personal Info"}
+          </button>
+        </div>
+      </section>
+
+      {/* Main Grid Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        {/* Left Side Info / Resume Upload */}
+        <div className="space-y-6">
+
+          {/* Resume Upload parsing zone */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative overflow-hidden">
+            {uploading && (
+              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center animate-pulse">
+                <span className="text-4xl mb-3">🧠</span>
+                <p className="text-sm font-extrabold text-indigo-950">AI Parsing Engine Active</p>
+                <p className="text-xs text-slate-400 mt-1">Extracting skills & experience values from PDF...</p>
               </div>
-              {!editing && (
-                <button
-                  className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-                  onClick={startEditing}
-                  type="button"
-                >
-                  Edit Profile
-                </button>
-              )}
+            )}
+
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Resume Parsing</h3>
+            <p className="text-xs text-slate-400 mb-4">Drag and drop or select your resume file. AI will automatically scan and fill in key details.</p>
+
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/10 rounded-2xl p-6 text-center transition cursor-pointer"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.doc"
+                className="hidden"
+                onChange={handleResumeUpload}
+              />
+              <span className="text-2xl block mb-2">📄</span>
+              <p className="text-xs font-bold text-slate-700">Choose resume file</p>
+              <p className="text-[10px] text-slate-400 mt-1">PDF or Word files up to 5MB</p>
             </div>
-          </div>
-        </section>
-
-        {saved && (
-          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 font-semibold text-emerald-700">
-            ✅ Profile changes saved successfully.
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 font-semibold text-red-700">
-            ❌ {error}
-          </div>
-        )}
-
-        {editing ? (
-          <form className="rounded-3xl bg-white p-6 shadow-sm sm:p-8" onSubmit={saveProfile}>
-            <div className="border-b border-slate-200 pb-5">
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Edit details</p>
-              <h2 className="mt-1 text-2xl font-bold">Personal Information</h2>
-              <p className="mt-2 text-slate-500">Update the information recruiters see on your profile.</p>
-            </div>
-
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <ProfileField label="Full Name" name="name" onChange={updateDraft} value={draft.name || ""} />
-              <ProfileField label="Professional Title" name="role" onChange={updateDraft} value={draft.role || ""} />
-              <ProfileField label="Email Address" name="email" onChange={updateDraft} type="email" value={draft.email || ""} />
-              <ProfileField label="Phone Number" name="phone" onChange={updateDraft} type="tel" value={draft.phone || ""} />
-              <div className="md:col-span-2">
-                <ProfileField label="Location" name="location" onChange={updateDraft} value={draft.location || ""} />
+            {profile?.resumeUrl && (
+              <div className="mt-4 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-800 truncate max-w-[70%]">📄 {profile.resumeUrl.split("/").pop()}</span>
+                <span className="text-[10px] font-black text-emerald-600 bg-white border border-emerald-200 px-2 py-0.5 rounded">Uploaded</span>
               </div>
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-600">Professional Summary</span>
-                <textarea
-                  className="mt-2 min-h-36 w-full rounded-xl border border-slate-300 p-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  name="summary"
-                  onChange={updateDraft}
-                  value={draft.summary || ""}
-                />
-              </label>
-            </div>
+            )}
+          </div>
 
-            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button
-                className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
-                onClick={cancelEditing}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? "Saving..." : "Save Changes"}
-              </button>
+          {/* Contact details */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Personal details</h3>
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <p className="font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
+                <p className="font-bold text-slate-700 mt-1 break-all">{profile?.email}</p>
+              </div>
+              <div>
+                <p className="font-bold text-slate-400 uppercase tracking-wider">Location</p>
+                <p className="font-bold text-slate-700 mt-1">{profile?.location || "Not specified"}</p>
+              </div>
             </div>
-          </form>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-[0.8fr_2fr]">
-            <aside className="space-y-6">
-              <section className="rounded-2xl bg-white p-6 shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-lg font-bold">Profile Strength</h2>
-                  <span className="font-bold text-blue-600">
-                    {userProfile.skills?.length > 0 ? "80%" : "60%"}
-                  </span>
-                </div>
-                <div className="h-2.5 rounded-full bg-slate-200">
-                  <div 
-                    className="h-2.5 rounded-full bg-blue-600 transition-all"
-                    style={{
-                      width: userProfile.skills?.length > 0 ? "80%" : "60%"
-                    }}
+          </div>
+
+        </div>
+
+        {/* Right Side Timeline Editors */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* Profile form popup inline edit */}
+          {editingField === "profile" && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+              <h3 className="text-lg font-bold text-slate-900">Update Profile details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Full Name</label>
+                  <input
+                    type="text"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                    value={profileDraft.name || ""}
+                    onChange={(e) => setProfileDraft({ ...profileDraft, name: e.target.value })}
                   />
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  {userProfile.resumeUrl ? "✅ Resume uploaded" : "Upload your resume to complete your profile."}
-                </p>
-              </section>
-
-              <section className="rounded-2xl bg-white p-6 shadow-sm">
-                <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Contact</p>
-                <div className="mt-5 space-y-5 text-sm">
-                  {[
-                    ["Email", userProfile.email],
-                    ["Phone", userProfile.phone || "Not specified"],
-                    ["Location", userProfile.location || "Not specified"]
-                  ].map(
-                    ([label, value]) => (
-                      <div key={label}>
-                        <p className="font-bold text-slate-400">{label}</p>
-                        <p className="mt-1 break-words font-medium text-slate-700">{value}</p>
-                      </div>
-                    )
-                  )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Designation</label>
+                  <input
+                    type="text"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                    value={profileDraft.designation || ""}
+                    onChange={(e) => setProfileDraft({ ...profileDraft, designation: e.target.value })}
+                  />
                 </div>
-              </section>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Location</label>
+                  <input
+                    type="text"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                    value={profileDraft.location || ""}
+                    onChange={(e) => setProfileDraft({ ...profileDraft, location: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Summary</label>
+                  <textarea
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none min-h-20"
+                    value={profileDraft.summary || ""}
+                    onChange={(e) => setProfileDraft({ ...profileDraft, summary: e.target.value })}
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  handleUpdateProfile(profileDraft);
+                  setEditingField(null);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition"
+              >
+                Save Details
+              </button>
+            </div>
+          )}
 
-              {userProfile.resumeUrl && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                  <p className="text-sm font-bold uppercase tracking-wider text-green-600">Resume</p>
-                  <div className="mt-3 space-y-3">
-                    <p className="text-sm text-slate-600">✅ Resume uploaded</p>
-                    <button
-                      onClick={handleDownloadResume}
-                      disabled={downloading}
-                      className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:bg-gray-400"
-                    >
-                      {downloading ? "Downloading..." : "📥 Download Resume"}
-                    </button>
-                  </div>
-                </section>
-              )}
-            </aside>
+          {/* About Summary */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">About Me</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">{profile?.summary || "Add a profile summary using the Edit Personal Info button."}</p>
+          </div>
 
-            <div className="space-y-6">
-              {userProfile.summary && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                  <p className="text-sm font-bold uppercase tracking-wider text-blue-600">About</p>
-                  <h2 className="mt-1 text-xl font-bold">Professional Summary</h2>
-                  <p className="mt-4 leading-7 text-slate-600">{userProfile.summary}</p>
-                </section>
-              )}
-
-              {userProfile.skills && userProfile.skills.length > 0 && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                  <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Expertise</p>
-                  <h2 className="mt-1 text-xl font-bold">Skills</h2>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {userProfile.skills.map((skill, idx) => (
-                      <span 
-                        key={idx}
-                        className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {userProfile.experience && userProfile.experience.length > 0 && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                    <div>
-                      <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Experience</p>
-                      <h2 className="mt-1 text-xl font-bold">Work History</h2>
-                    </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
-                      {userProfile.experience.length} role(s)
-                    </span>
-                  </div>
-                  <div className="mt-5 space-y-4 border-l-2 border-blue-200 pl-5">
-                    {userProfile.experience.map((exp, idx) => (
-                      <div key={idx}>
-                        <div className="flex flex-col justify-between gap-1 sm:flex-row">
-                          <div>
-                            <h3 className="font-bold">{exp.title || "Position"}</h3>
-                            <p className="text-slate-500">{exp.company || "Company"}</p>
-                          </div>
-                          <span className="text-sm font-semibold text-blue-600">{exp.duration || ""}</span>
-                        </div>
-                        {exp.description && (
-                          <p className="mt-3 text-sm leading-6 text-slate-600">{exp.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {userProfile.education && userProfile.education.length > 0 && (
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                    <div>
-                      <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Education</p>
-                      <h2 className="mt-1 text-xl font-bold">Academic Background</h2>
-                    </div>
-                  </div>
-                  <div className="mt-5 space-y-4">
-                    {userProfile.education.map((edu, idx) => (
-                      <div key={idx} className="border-l-2 border-purple-200 pl-4">
-                        <h3 className="font-bold">{edu.degree || "Degree"}</h3>
-                        <p className="text-slate-500">{edu.school || "School"}</p>
-                        {edu.duration && (
-                          <p className="text-sm font-semibold text-purple-600 mt-1">{edu.duration}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+          {/* Skills Tags block */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Skills</h3>
+            <div className="flex flex-wrap gap-2">
+              {(profile?.skills || []).map((skill, index) => (
+                <div key={index} className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100/60 rounded-full px-3 py-1.5 text-xs font-bold text-indigo-700">
+                  <span>{skill}</span>
+                  <button onClick={() => handleRemoveSkill(skill)} className="hover:text-rose-600 text-[10px] cursor-pointer">✕</button>
+                </div>
+              ))}
+            </div>
+            <div className="max-w-xs mt-3">
+              <input
+                type="text"
+                placeholder="Type a skill and hit Enter"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={handleAddSkill}
+              />
             </div>
           </div>
-        )}
+
+          {/* Experience Timeline */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900">Work Experience</h3>
+              <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">{(profile?.experience || []).length} items</span>
+            </div>
+
+            {/* Experience timeline map */}
+            <div className="space-y-6 border-l-2 border-slate-100 pl-4 ml-2">
+              {(profile?.experience || []).map((exp, idx) => (
+                <div key={idx} className="relative group">
+                  <div className="absolute -left-[23px] top-1.5 w-2.5 h-2.5 bg-indigo-600 rounded-full border-2 border-white ring-4 ring-indigo-50" />
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <h4 className="font-extrabold text-sm text-slate-900">{exp.title}</h4>
+                      <p className="text-xs font-bold text-slate-400 mt-0.5">{exp.company} · <span className="text-indigo-600 font-semibold">{exp.duration}</span></p>
+                      <p className="text-xs text-slate-550 leading-relaxed mt-2">{exp.description}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveExperience(idx)}
+                      className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer transition"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Exp Form */}
+            <div className="bg-slate-55/40 border border-slate-100 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-black text-slate-700 uppercase">Add Work Experience</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Company Name"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  value={newExp.company}
+                  onChange={(e) => setNewExp({ ...newExp, company: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Job Title"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  value={newExp.title}
+                  onChange={(e) => setNewExp({ ...newExp, title: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Duration (e.g. 2022 - Present)"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2"
+                  value={newExp.duration}
+                  onChange={(e) => setNewExp({ ...newExp, duration: e.target.value })}
+                />
+                <textarea
+                  placeholder="Description of role"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2 min-h-16"
+                  value={newExp.description}
+                  onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
+                />
+              </div>
+              <button
+                onClick={handleAddExperience}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition"
+              >
+                + Add experience
+              </button>
+            </div>
+
+          </div>
+
+          {/* Education Timeline */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+            <h3 className="text-lg font-bold text-slate-900">Education & Background</h3>
+
+            <div className="space-y-6 border-l-2 border-slate-100 pl-4 ml-2">
+              {(profile?.education || []).map((edu, idx) => (
+                <div key={idx} className="relative group">
+                  <div className="absolute -left-[23px] top-1.5 w-2.5 h-2.5 bg-purple-600 rounded-full border-2 border-white ring-4 ring-purple-50" />
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <h4 className="font-extrabold text-sm text-slate-900">{edu.degree}</h4>
+                      <p className="text-xs font-bold text-slate-400 mt-0.5">{edu.school} · <span className="text-purple-650 font-semibold">{edu.duration}</span></p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveEducation(idx)}
+                      className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer transition"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Edu Form */}
+            <div className="bg-slate-55/40 border border-slate-100 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-black text-slate-700 uppercase">Add Education / Certification</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Degree / Certificate"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  value={newEdu.degree}
+                  onChange={(e) => setNewEdu({ ...newEdu, degree: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="School / Institution"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  value={newEdu.school}
+                  onChange={(e) => setNewEdu({ ...newEdu, school: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Duration (e.g. 2018 - 2022)"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2"
+                  value={newEdu.duration}
+                  onChange={(e) => setNewEdu({ ...newEdu, duration: e.target.value })}
+                />
+              </div>
+              <button
+                onClick={handleAddEducation}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition"
+              >
+                + Add education
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
     </div>
   );

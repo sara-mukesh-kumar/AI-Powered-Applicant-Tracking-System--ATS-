@@ -1,141 +1,306 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-const initialSavedJobs = [
-  {
-    id: "saved-1",
-    title: "React Developer",
-    company: "XYZ Solutions",
-    location: "Bangalore",
-    type: "Remote",
-    savedOn: "Jun 14, 2026",
-    skills: ["React", "JavaScript", "Tailwind CSS"],
-  },
-  {
-    id: "saved-2",
-    title: "MERN Stack Developer",
-    company: "ABC Technologies",
-    location: "Chennai",
-    type: "Full Time",
-    savedOn: "Jun 12, 2026",
-    skills: ["MongoDB", "Express.js", "React", "Node.js"],
-  },
-  {
-    id: "saved-3",
-    title: "Frontend Engineer",
-    company: "Pixel Labs",
-    location: "Hyderabad",
-    type: "Hybrid",
-    savedOn: "Jun 09, 2026",
-    skills: ["TypeScript", "React", "UI Systems"],
-  },
-];
+import { useState, useEffect } from "react";
 
 function SavedJobs() {
-  const navigate = useNavigate();
-  const [savedJobs, setSavedJobs] = useState(initialSavedJobs);
-  const [search, setSearch] = useState("");
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const filteredJobs = useMemo(() => {
-    const query = search.toLowerCase();
-    return savedJobs.filter((job) =>
-      [job.title, job.company, job.location, job.type, ...job.skills].some((value) =>
-        value.toLowerCase().includes(query)
-      )
-    );
-  }, [savedJobs, search]);
+  // Alert form states
+  const [newKeyword, setNewKeyword] = useState("");
+  const [newLocation, setNewLocation] = useState("");
+  const [newFrequency, setNewFrequency] = useState("Daily");
 
-  const removeSavedJob = (jobId) => {
-    setSavedJobs((currentJobs) => currentJobs.filter((job) => job.id !== jobId));
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchSavedData = async () => {
+      await Promise.resolve();
+      try {
+        setLoading(true);
+        setError("");
+
+        // 1. Fetch profile to get alerts
+        const profileRes = await fetch("http://localhost:5000/api/applicant/profile", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (profileRes.ok) {
+          const prof = await profileRes.json();
+          setAlerts(prof.alerts || []);
+        }
+
+        // 2. Fetch saved jobs list
+        const savedRes = await fetch("http://localhost:5000/api/applicant/saved-jobs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (savedRes.ok) {
+          const savedData = await savedRes.json();
+          setSavedJobs(savedData.savedJobs || savedData || []);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch saved data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSavedData();
+  }, [token]);
+
+  // Remove saved job
+  const handleRemoveSaved = async (jobId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/applicant/save/${jobId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setSavedJobs(prev => prev.filter(job => job._id !== jobId));
+        setSuccess("Saved job removed");
+        setTimeout(() => setSuccess(""), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Submit Application from saved
+  const handleApplySaved = async (jobId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/applicant/apply/${jobId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setSuccess("Applied successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        const errJson = await res.json();
+        setError(errJson.message || "Failed to submit application");
+        setTimeout(() => setError(""), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Add Alert handler
+  const handleAddAlert = async (e) => {
+    e.preventDefault();
+    if (!newKeyword) return;
+
+    const newAlert = { keywords: newKeyword, location: newLocation, frequency: newFrequency };
+    const updatedAlerts = [...alerts, newAlert];
+
+    try {
+      const res = await fetch("http://localhost:5000/api/applicant/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ alerts: updatedAlerts })
+      });
+      if (res.ok) {
+        setAlerts(updatedAlerts);
+        setNewKeyword("");
+        setNewLocation("");
+        setSuccess("Job alert configured successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Delete Alert handler
+  const handleDeleteAlert = async (idx) => {
+    const updatedAlerts = alerts.filter((_, i) => i !== idx);
+    try {
+      const res = await fetch("http://localhost:5000/api/applicant/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ alerts: updatedAlerts })
+      });
+      if (res.ok) {
+        setAlerts(updatedAlerts);
+        setSuccess("Alert removed");
+        setTimeout(() => setSuccess(""), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
-    <div className="text-slate-900">
-        <section className="mb-6 rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Bookmarks</p>
-              <h2 className="mt-1 text-2xl font-bold">Saved Opportunities</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Keep promising roles in one place before applying.
-              </p>
-            </div>
-            <span className="w-fit rounded-full bg-blue-100 px-3 py-1 text-sm font-bold text-blue-700">
-              {savedJobs.length} saved
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in">
+      
+      {/* Messaging overlay */}
+      {success && (
+        <div className="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl shadow-xl z-50 text-sm font-bold border border-emerald-500/20">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="fixed bottom-6 right-6 bg-rose-600 text-white px-6 py-3.5 rounded-2xl shadow-xl z-50 text-sm font-bold border border-rose-500/20">
+          {error}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-slate-900 to-indigo-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl">
+        <div>
+          <span className="bg-indigo-500/20 text-indigo-300 text-xs font-bold px-3 py-1.5 rounded-full border border-indigo-400/20 tracking-wider uppercase inline-block mb-3">
+            Bookmarks Hub
+          </span>
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Saved Jobs & Alerts</h1>
+          <p className="mt-2 text-slate-300 text-sm sm:text-base max-w-xl">
+            Keep track of promising roles, manage automated notifications, and configure frequency alerts for matching job openings.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left Side: Saved Jobs grid list */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-slate-900">Bookmarks</h3>
+            <span className="text-xs font-extrabold text-indigo-650 bg-indigo-55/60 px-2.5 py-1 rounded">
+              {savedJobs.length} Bookmarked
             </span>
           </div>
 
-          <label className="mt-6 block text-sm font-bold text-slate-700" htmlFor="saved-job-search">
-            Search saved jobs
-          </label>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-            id="saved-job-search"
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by role, company, location, or skill..."
-            type="search"
-            value={search}
-          />
-        </section>
-
-        {filteredJobs.length > 0 ? (
-          <section className="grid gap-5 md:grid-cols-2">
-            {filteredJobs.map((job) => (
-              <article className="rounded-2xl bg-white p-6 shadow-sm" key={job.id}>
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          {loading ? (
+            <div className="text-center p-12 text-slate-400 font-bold">Loading bookmarks...</div>
+          ) : savedJobs.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-sm">
+              <span className="text-3xl block mb-2">⭐</span>
+              <p className="font-extrabold text-slate-800">Your bookmark folder is empty</p>
+              <p className="text-xs text-slate-400 mt-1">Browse listing pages to bookmark roles for later review.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {savedJobs.map((job) => (
+                <article key={job._id} className="bg-white rounded-3xl p-5 border border-slate-100 hover:shadow-md transition duration-300 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-lg font-bold">{job.title}</h3>
-                    <p className="mt-1 font-medium text-slate-500">{job.company}</p>
-                    <p className="mt-2 text-sm font-semibold text-blue-600">Saved {job.savedOn}</p>
+                    <h4 className="font-extrabold text-sm text-slate-900">{job.title}</h4>
+                    <p className="text-xs font-bold text-slate-400 mt-0.5">{job.company || "Recruiter Team"}</p>
+                    <div className="mt-3 flex gap-2 text-[10px] font-bold text-slate-500">
+                      <span className="rounded bg-slate-50 border border-slate-100 px-2 py-1">{job.location || "Remote"}</span>
+                      <span className="rounded bg-slate-50 border border-slate-100 px-2 py-1">{job.experienceLevel || "Mid Level"}</span>
+                    </div>
                   </div>
-                  <span className="w-fit rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600">
-                    {job.type}
-                  </span>
-                </div>
 
-                <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-600">
-                  <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.location}</span>
-                  {job.skills.map((skill) => (
-                    <span className="rounded-full bg-blue-50 px-3 py-1.5 text-blue-700" key={skill}>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+                  <div className="mt-5 flex gap-2">
+                    <button
+                      onClick={() => handleApplySaved(job._id)}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-3 rounded-xl transition cursor-pointer text-center"
+                    >
+                      Apply Now
+                    </button>
+                    <button
+                      onClick={() => handleRemoveSaved(job._id)}
+                      className="border border-slate-200 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 px-3 py-2 rounded-xl transition cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
 
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white transition hover:bg-blue-700"
-                    onClick={() => navigate("/applicant/jobDetails", { state: { job } })}
-                    type="button"
-                  >
-                    Apply Now
-                  </button>
-                  <button
-                    className="rounded-xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-100"
-                    onClick={() => removeSavedJob(job.id)}
-                    type="button"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </article>
-            ))}
-          </section>
-        ) : (
-          <section className="rounded-2xl bg-white p-10 text-center shadow-sm">
-            <h3 className="text-lg font-bold">No saved jobs found</h3>
-            <p className="mt-2 text-slate-500">
-              Save roles from job search to build your shortlist.
-            </p>
-            <button
-              className="mt-5 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
-              onClick={() => navigate("/applicant/joblisting")}
-              type="button"
-            >
-              Browse Jobs
-            </button>
-          </section>
-        )}
+        {/* Right Side: Alerts configurator */}
+        <div className="space-y-6">
+          
+          {/* Configure alert form */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Job Alerts Configurator</h3>
+            <p className="text-xs text-slate-400">Configure automated alerts for keyword and location queries.</p>
+
+            <form onSubmit={handleAddAlert} className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Keywords</label>
+                <input
+                  type="text"
+                  placeholder="e.g. React Developer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                  value={newKeyword}
+                  onChange={(e) => setNewKeyword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Location</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Remote"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                  value={newLocation}
+                  onChange={(e) => setNewLocation(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Frequency</label>
+                <select
+                  value={newFrequency}
+                  onChange={(e) => setNewFrequency(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                >
+                  <option value="Daily">Daily Summary</option>
+                  <option value="Weekly">Weekly Digest</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-indigo-650 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl transition cursor-pointer"
+              >
+                Create Alert
+              </button>
+            </form>
+          </div>
+
+          {/* List of active alerts */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="font-bold text-slate-900 text-base">Active Notifications</h3>
+            <div className="space-y-2">
+              {alerts.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">No active alert configurations.</p>
+              ) : (
+                alerts.map((alert, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">🔍 {alert.keywords}</p>
+                      <p className="text-[10px] text-slate-450 mt-0.5">📍 {alert.location || "Anywhere"} · {alert.frequency}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteAlert(idx)}
+                      className="text-slate-400 hover:text-rose-600 text-xs font-bold p-1 transition cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ApplicantApplicationModal from "./ApplicantApplyJob";
 
-const job = {
+const mockJob = {
   title: "MERN Stack Developer",
   company: "ABC Technologies",
   location: "Chennai",
@@ -46,7 +46,33 @@ function DetailList({ items }) {
 
 function JobDetails() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [applicationOpen, setApplicationOpen] = useState(false);
+
+  const receivedJob = location.state?.job;
+  const job = receivedJob ? {
+    title: receivedJob.title || "Untitled role",
+    company: receivedJob.company || "Corporate Partner",
+    location: receivedJob.location || "Remote",
+    type: receivedJob.type || "Full Time",
+    salary: receivedJob.salary || "Not specified",
+    experience: receivedJob.experience || "Mid-Level",
+    match: receivedJob.match || "Strong Match",
+    postedDate: receivedJob.posted || "Recently",
+    applicants: receivedJob.applicants || 14,
+    skills: receivedJob.skills || [],
+    description: receivedJob.description || "No full description provided.",
+    responsibilities: receivedJob.responsibilities || [
+      "Collaborate with development teams to build scalable features",
+      "Participate in design and code reviews",
+      "Deploy and maintain applications on modern cloud infrastructure"
+    ],
+    requirements: receivedJob.requirements || [
+      "Proficient with matching stack technologies",
+      "Strong debugging and problem solving skills",
+      "Excellent team collaboration and communication"
+    ]
+  } : mockJob;
 
   return (
     <div className="text-slate-900">

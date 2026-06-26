@@ -1,153 +1,178 @@
-import { useMemo, useState } from "react";
-
-const applications = [
-  {
-    role: "MERN Stack Developer",
-    company: "ABC Technologies",
-    location: "Chennai",
-    date: "Jun 10, 2026",
-    status: "Under Review",
-    stage: "under-review",
-    nextStep: "Recruiter screening pending",
-    color: "bg-blue-50 text-blue-700",
-  },
-  {
-    role: "Frontend Developer",
-    company: "XYZ Solutions",
-    location: "Bangalore",
-    date: "Jun 08, 2026",
-    status: "Interviewing",
-    stage: "interviewing",
-    nextStep: "Technical round on Jun 20",
-    color: "bg-amber-50 text-amber-700",
-  },
-  {
-    role: "React Developer",
-    company: "Pixel Labs",
-    location: "Remote",
-    date: "Jun 05, 2026",
-    status: "Offered",
-    stage: "offered",
-    nextStep: "Review offer letter",
-    color: "bg-emerald-50 text-emerald-700",
-  },
-  {
-    role: "Node.js Developer",
-    company: "TechNova",
-    location: "Hyderabad",
-    date: "May 29, 2026",
-    status: "Archived",
-    stage: "archived",
-    nextStep: "No action needed",
-    color: "bg-slate-100 text-slate-600",
-  },
-];
-
-const tabs = [
-  { label: "All Applications", value: "all" },
-  { label: "Under Review", value: "under-review" },
-  { label: "Interviewing", value: "interviewing" },
-  { label: "Offered", value: "offered" },
-  { label: "Archived", value: "archived" },
-];
+import { useState, useEffect } from "react";
 
 function ApplicationTracker() {
+  const [applications, setApplications] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
 
-  const filteredApplications = useMemo(() => {
-    if (activeTab === "all") return applications;
-    return applications.filter((application) => application.stage === activeTab);
-  }, [activeTab]);
+  const token = localStorage.getItem("token");
 
-  const summary = useMemo(
-    () => [
-      ["4", "Total applications", "text-blue-600", "bg-blue-50"],
-      ["1", "Interviews", "text-amber-600", "bg-amber-50"],
-      ["1", "Offer received", "text-emerald-600", "bg-emerald-50"],
-    ],
-    []
-  );
+  useEffect(() => {
+    const fetchApplications = async () => {
+      await Promise.resolve();
+      try {
+        setLoading(true);
+        const res = await fetch("http://localhost:5000/api/applicant/applications", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setApplications(data.applications || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, [token]);
+
+  const tabs = [
+    { label: "All Applications", value: "all" },
+    { label: "Applied", value: "Applied" },
+    { label: "Interviewing", value: "Interview" },
+    { label: "Offered", value: "Offered" },
+    { label: "Rejected/Withdrawn", value: "Rejected" }
+  ];
+
+  const filteredApps = applications.filter(app => {
+    if (activeTab === "all") return true;
+    if (activeTab === "Rejected") return ["Rejected", "Withdrawn"].includes(app.status);
+    return app.status === activeTab;
+  });
 
   return (
-    <div className="text-slate-900">
-        <section className="mb-6 grid gap-4 sm:grid-cols-3">
-          {summary.map(([value, label, textColor, background]) => (
-            <article className="rounded-2xl bg-white p-5 shadow-sm" key={label}>
-              <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${background}`}>
-                <strong className={`text-xl ${textColor}`}>{value}</strong>
-              </div>
-              <p className="font-bold text-slate-900">{label}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-500">Updated today</p>
-            </article>
-          ))}
-        </section>
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-slate-900 to-indigo-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl">
+        <div>
+          <span className="bg-indigo-500/20 text-indigo-300 text-xs font-bold px-3 py-1.5 rounded-full border border-indigo-400/20 tracking-wider uppercase inline-block mb-3">
+            Application Pipeline
+          </span>
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Application History</h1>
+          <p className="mt-2 text-slate-300 text-sm sm:text-base max-w-xl">
+            Track status updates, review recruiter scheduling details, and manage feedback transcripts for all your submitted job applications.
+          </p>
+        </div>
+      </div>
 
-        <section className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
-          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Pipeline</p>
-              <h2 className="mt-1 text-2xl font-bold">Application History</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Track each job from application to final decision.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tabs.map((tab) => (
-                <button
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    activeTab === tab.value
-                      ? "bg-blue-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                  key={tab.value}
-                  onClick={() => setActiveTab(tab.value)}
-                  type="button"
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* Tabs list */}
+      <div className="flex flex-wrap gap-2.5 border-b border-slate-100 pb-3">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={`rounded-2xl px-5 py-2.5 text-xs font-extrabold transition cursor-pointer ${
+              activeTab === tab.value
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
+                : "bg-slate-50 text-slate-650 hover:bg-slate-100 border border-slate-200/60"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <div className="divide-y divide-slate-100">
-            {filteredApplications.map((application) => (
+      {/* Main tracker body */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left List Feed */}
+        <div className="lg:col-span-2 space-y-4">
+          {loading ? (
+            <div className="text-center p-12 text-slate-400 font-bold">Loading pipeline data...</div>
+          ) : filteredApps.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-100">
+              <span className="text-3xl block mb-2">📋</span>
+              <p className="font-extrabold text-slate-800">No applications in this category</p>
+              <p className="text-xs text-slate-400 mt-1">Submit applications or modify the active filter tab.</p>
+            </div>
+          ) : (
+            filteredApps.map((app) => (
               <article
-                className="flex flex-col gap-4 p-6 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
-                key={`${application.role}-${application.company}`}
+                key={app._id}
+                onClick={() => setSelectedApp(app)}
+                className={`rounded-3xl p-5 border transition-all duration-300 hover:shadow-md cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
+                  selectedApp?._id === app._id ? "border-indigo-500 bg-indigo-50/10" : "border-slate-100 bg-white"
+                }`}
               >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="font-bold">{application.role}</h3>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${application.color}`}>
-                      {application.status}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {application.company} - {application.location} - Applied {application.date}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-700">
-                    {application.nextStep}
+                <div>
+                  <h4 className="font-extrabold text-base text-slate-900">{app.jobId?.title || "Role Name"}</h4>
+                  <p className="text-xs font-bold text-slate-450 mt-0.5">{app.jobId?.company || "Company"}</p>
+                  <p className="text-[10px] text-slate-400 mt-2">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`rounded-full px-3 py-1.5 text-[10px] font-black border ${
+                    app.status === "Interview" ? "bg-amber-50 text-amber-700 border-amber-100" :
+                    app.status === "Offered" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                    app.status === "Rejected" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                    app.status === "Withdrawn" ? "bg-slate-100 text-slate-600 border-slate-200" :
+                    "bg-blue-50 text-blue-700 border-blue-100"
+                  }`}>
+                    {app.status}
+                  </span>
+                  <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                    Score: {app.aiScore || 70}%
+                  </span>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+
+        {/* Right Info Overlay */}
+        <div className="lg:col-span-1">
+          {selectedApp ? (
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md space-y-6 sticky top-6">
+              <div>
+                <span className="text-[10px] font-black tracking-wider bg-indigo-50 text-indigo-700 px-2 py-1 rounded uppercase">Application details</span>
+                <h3 className="text-lg font-black text-slate-900 mt-3">{selectedApp.jobId?.title || "Role Name"}</h3>
+                <p className="text-xs font-bold text-slate-400 mt-0.5">{selectedApp.jobId?.company || "Company Name"}</p>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div>
+                  <h4 className="font-bold text-slate-400 uppercase">AI Evaluation Insight</h4>
+                  <p className="font-semibold text-indigo-750 mt-1">Match Rank: {selectedApp.aiScore || 70}/100</p>
+                  <p className="text-slate-600 leading-relaxed mt-1.5 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+                    {selectedApp.aiSummary || "The profile is matching with required core components."}
                   </p>
                 </div>
-                <button
-                  className="w-fit rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                  type="button"
-                >
-                  View Details
-                </button>
-              </article>
-            ))}
-          </div>
 
-          {filteredApplications.length === 0 && (
-            <div className="p-10 text-center">
-              <h3 className="text-lg font-bold">No applications in this stage</h3>
-              <p className="mt-2 text-slate-500">Switch tabs to review another status.</p>
+                <div>
+                  <h4 className="font-bold text-slate-400 uppercase">Pipeline Stage</h4>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className={`w-3.5 h-3.5 rounded-full ${
+                      selectedApp.status === "Rejected" || selectedApp.status === "Withdrawn" ? "bg-rose-500" :
+                      selectedApp.status === "Offered" ? "bg-emerald-500" : "bg-indigo-650 animate-pulse"
+                    }`} />
+                    <span className="font-bold text-slate-800">{selectedApp.status}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-400 uppercase">Action Engine</h4>
+                  <button
+                    onClick={() => alert("Recruiter has been notified of your follow-up request!")}
+                    className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl cursor-pointer text-center transition"
+                  >
+                    Follow up with Recruiter
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="hidden lg:block bg-slate-50 border border-slate-100 border-dashed rounded-3xl p-10 text-center text-slate-400 font-bold sticky top-6">
+              Click an application from the tracker list to review evaluation summaries and feedback logs.
             </div>
           )}
-        </section>
+        </div>
+
+      </div>
     </div>
   );
 }
