@@ -28,14 +28,14 @@ export default function AdminCommunicationCenter() {
     }
   };
 
-  // State trigger selection parameter switches
+  // State trigger selection parameters switch
   const handleTemplateSelectionChange = (type) => {
     setTemplateType(type);
     setSubject(prebuiltTemplatesHub[type].subject);
     setBodyText(prebuiltTemplatesHub[type].body);
   };
 
-  // Submit trigger dispatch network payload handler
+  // Submit handler - Firing directly to the separated endpoint
   const handleDispatchEmailAlert = async (e) => {
     e.preventDefault();
     
@@ -52,16 +52,17 @@ export default function AdminCommunicationCenter() {
       
       const token = localStorage.getItem("token");
       
-      // Absolute endpoint execution mapping safely linked to post router tracking
-      const res = await fetch("/api/admin/broadcast", { 
+      // ✅ FIXED: Hits the exact decoupled endpoint we configured in adminroutes.js
+      const res = await fetch("/api/admin/send-email", { 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: `[Email Dispatch Alert to: ${targetEmail}] Subject: ${subject} | Body Snippet: ${bodyText.substring(0, 40)}...`,
-          targetGroup: "all"
+          recipientEmail: targetEmail,
+          subject: subject,
+          bodyText: bodyText
         })
       });
 
@@ -69,15 +70,15 @@ export default function AdminCommunicationCenter() {
 
       if (res.ok) {
         setStatus("success");
-        setMessage(`Communication payload pipeline fired successfully to: ${targetEmail}`);
-        setTargetEmail(""); // Clear target inputs field
+        setMessage(`Communication payload pipeline successfully triggered for target: ${targetEmail}`);
+        setTargetEmail(""); // Success par field clear kijiye
       } else {
         setStatus("error");
-        setMessage(data.message || "Server endpoint rejected data schema validation criteria rules.");
+        setMessage(data.message || "Server pipeline validation failed.");
       }
     } catch (err) {
       setStatus("error");
-      setMessage("Network gateway connection tracking error exception parsing package.");
+      setMessage("Network gateway connection tracking error exception.");
     } finally {
       setSending(false);
     }
@@ -85,14 +86,14 @@ export default function AdminCommunicationCenter() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Upper Module Section Summary Header */}
+      {/* Summary Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">System Communications Hub</h1>
         <p className="text-sm text-gray-500">Configure corporate messaging workflows, manipulate templates, and invoke direct triggers.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Option Select Column Bar */}
+        {/* Left Options Presets Panel */}
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-xs space-y-4">
           <h3 className="font-semibold text-gray-800 text-sm tracking-wide uppercase">Core System Presets</h3>
           <div className="space-y-2">
@@ -132,7 +133,7 @@ export default function AdminCommunicationCenter() {
           </div>
         </div>
 
-        {/* Right Active Mail Configuration Form Editor layout panel */}
+        {/* Right Active Mail Configuration Panel Form */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-xs">
           <form onSubmit={handleDispatchEmailAlert} className="space-y-4">
             
@@ -171,7 +172,7 @@ export default function AdminCommunicationCenter() {
               />
             </div>
 
-            {/* Alert Status Feedback block notifications */}
+            {/* Alert Status Feedback Block */}
             {message && (
               <div className={`p-4 rounded-lg text-xs border font-medium ${
                 status === "success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"
@@ -180,12 +181,12 @@ export default function AdminCommunicationCenter() {
               </div>
             )}
 
-            {/* Action dispatch button controller component trigger */}
+            {/* Submit Controller Action Trigger Button */}
             <div className="text-right">
               <button
                 type="submit"
                 disabled={sending}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer outline-none"
               >
                 {sending ? "Transmitting over SMTP..." : "Dispatch Automated Trigger"}
               </button>

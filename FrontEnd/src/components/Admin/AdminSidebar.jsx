@@ -7,7 +7,8 @@ const menuItems = [
   { label: "Applications", path: "/admin/applications", icon: "📋" },
   { label: "System Broadcast", path: "/admin/broadcast", icon: "📢" },
   { label: "Communication", path: "/admin/communication", icon: "✉️" }, // 👈 NEWLY ADDED EMAIL HUB TAB
-  { label: "System Audit Logs", path: "/admin/audit-logs", icon: "🛡️" }, 
+  { label: "System Audit Logs", path: "/admin/audit-logs", icon: "🛡️" },
+  { label: "Reporting Dashboard", path: "/admin/analytics-report", icon: "📊" }, 
 ];
 
 export default function AdminSidebar({ closeMobileMenu }) {

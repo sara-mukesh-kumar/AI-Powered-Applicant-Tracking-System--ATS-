@@ -15,6 +15,7 @@ import AdminApplicationsMonitor from "./components/Admin/AdminApplicationsMonito
 import AdminBroadcast from "./components/Admin/AdminBroadcast";
 import AdminAuditLogs from "./components/Admin/AdminAuditLogs";
 import AdminCommunicationCenter from "./components/Admin/admincommunicationcenter.jsx";
+import AdminReporting from "./components/Admin/AdminReporting.jsx";
 
 // Recruiter Components
 import RecruiterDashboard from "./components/Recruiter/RecruiterDashboard";
@@ -75,6 +76,7 @@ function App() {
           <Route path="broadcast" element={<AdminBroadcast />} />
           <Route path="audit-logs" element={<AdminAuditLogs />} />
           <Route path="communication" element={<AdminCommunicationCenter />} />
+          <Route path="analytics-report" element={<AdminReporting />} />
         </Route>
 
         {/* ================= RECRUITER ROUTES ================= */}

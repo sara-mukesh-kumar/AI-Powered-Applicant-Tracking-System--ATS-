@@ -6,14 +6,40 @@ import Broadcast from "../models/Broadcast.js";
 import AuditLog from "../models/AuditLog.js"; 
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
-
 const router = express.Router();
+
+// ========================================================
+// ✉️ TRANSACTIONAL EMAIL ENDPOINT (MAPPED AT TOP)
+// ========================================================
+
+// POST /api/admin/send-email — Dedicated channel for single candidate mailing
+router.post("/send-email", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { recipientEmail, subject, bodyText } = req.body;
+
+    if (!recipientEmail || !bodyText) {
+      return res.status(400).json({ message: "Recipient address and body text structure are required" });
+    }
+
+    // 🛡️ Trigger Log strictly with unique EMAIL_DISPATCHED action status!
+    const logEntry = new AuditLog({
+      action: "EMAIL_DISPATCHED", 
+      details: `Admin dispatched system communication template to candidate [${recipientEmail}] | Subject: ${subject}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
+    return res.status(200).json({ success: true, message: "Transactional system communication logged safely" });
+  } catch (error) {
+    return res.status(500).json({ message: "Email logger transmission failure", error: error.message });
+  }
+});
 
 // ========================================================
 // 📊 DASHBOARD METRICS & CORE TRACKING
 // ========================================================
 
-// GET /api/admin/stats — System Architecture Statistics Overview
 router.get("/stats", protect, authorize("admin"), async (req, res) => {
   try {
     const totalJobs = await Job.countDocuments();
@@ -33,250 +59,9 @@ router.get("/stats", protect, authorize("admin"), async (req, res) => {
 });
 
 // ========================================================
-// 👥 USER MATRIX CONTROL & ACCOUNT ACTIONS
+// 📢 BROADCAST ENGINES (GLOBAL BANNER NOTIFICATIONS)
 // ========================================================
 
-// GET /api/admin/users — Fetch users excluding admins with search index rules
-router.get("/users", protect, authorize("admin"), async (req, res) => {
-  try {
-    const { search, role, status } = req.query;
-    let queryCondition = { role: { $ne: "admin" } };
-
-    if (role) queryCondition.role = role;
-    if (status) queryCondition.status = status;
-    if (search) {
-      queryCondition.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } }
-      ];
-    }
-
-    const users = await User.find(queryCondition)
-      .select("-password")
-      .sort({ createdAt: -1 });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: "User master records pull crashed", error: error.message });
-  }
-});
-
-// PATCH /api/admin/users/:id/status — Toggle Block/Unblock Account
-router.patch("/users/:id/status", protect, authorize("admin"), async (req, res) => {
-  try {
-    const { status } = req.body;
-    if (!["approved", "suspended", "pending"].includes(status)) {
-      return res.status(400).json({ message: "Invalid access status argument value" });
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    ).select("-password");
-
-    if (!user) return res.status(404).json({ message: "User target key not found" });
-
-    const logEntry = new AuditLog({
-      action: "USER_STATUS_UPDATE",
-      details: `Modified access permissions flag to [${status}] for target: ${user.name || "User"} (${user.email})`,
-      performedBy: req.user._id,
-      ipAddress: req.ip
-    });
-    await logEntry.save();
-
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Server failure running user update modifier", error: error.message });
-  }
-});
-
-// PATCH /api/admin/users/:id/role — Role-Based Access Level Modifier (Dynamic Role Assignment)
-router.patch("/users/:id/role", protect, authorize("admin"), async (req, res) => {
-  try {
-    const { role } = req.body;
-    if (!["admin", "recruiter", "applicant"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role target string parameter" });
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true }
-    ).select("-password");
-
-    if (!user) return res.status(404).json({ message: "User record index signature lookup mismatch" });
-
-    const logEntry = new AuditLog({
-      action: "USER_ROLE_MIGRATED",
-      details: `Elevated/re-routed systemic permissions role to [${role}] for profile: ${user.email}`,
-      performedBy: req.user._id,
-      ipAddress: req.ip
-    });
-    await logEntry.save();
-
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Server crash shifting account system privilege mapping", error: error.message });
-  }
-});
-
-// DELETE /api/admin/users/:id — Permanent Account Deletion
-router.delete("/users/:id", protect, authorize("admin"), async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User matching key context missing" });
-
-    await User.findByIdAndDelete(req.params.id);
-
-    const logEntry = new AuditLog({
-      action: "USER_DELETED",
-      details: `Permanently destroyed account document for [${user.name}] | Unique email record trace: ${user.email}`,
-      performedBy: req.user._id,
-      ipAddress: req.ip
-    });
-    await logEntry.save();
-
-    res.json({ message: "User data wiped successfully from core production collections" });
-  } catch (error) {
-    res.status(500).json({ message: "Database deletion protocol breakdown execution error", error: error.message });
-  }
-});
-
-// ========================================================
-// 💼 JOBS MODULE DISCOVERY & SYSTEM MODIFICATIONS
-// ========================================================
-
-// GET /api/admin/jobs — Fetch global employment listings logs
-router.get("/jobs", protect, authorize("admin"), async (req, res) => {
-  try {
-    const jobs = await Job.find()
-      .populate("recruiterId", "name email")
-      .sort({ createdAt: -1 });
-    res.json(jobs);
-  } catch (error) {
-    res.status(500).json({ message: "Job logs transaction lookup failure", error: error.message });
-  }
-});
-
-// PATCH /api/admin/jobs/:id/status — Archive or change status configuration metrics
-router.patch("/jobs/:id/status", protect, authorize("admin"), async (req, res) => {
-  try {
-    const { status } = req.body;
-    const job = await Job.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    if (!job) return res.status(404).json({ message: "Job document reference map empty" });
-
-    const logEntry = new AuditLog({
-      action: "JOB_STATUS_UPDATE",
-      details: `Modified recruitment position status tracking [${job.title}] updated to flag: ${status}`,
-      performedBy: req.user._id,
-      ipAddress: req.ip
-    });
-    await logEntry.save();
-
-    res.json(job);
-  } catch (error) {
-    res.status(500).json({ message: "Job metadata pipeline transformation fault", error: error.message });
-  }
-});
-
-// DELETE /api/admin/jobs/:id — Direct Admin Job Deletion
-router.delete("/jobs/:id", protect, authorize("admin"), async (req, res) => {
-  try {
-    const job = await Job.findById(req.params.id);
-    if (!job) return res.status(404).json({ message: "Job item signature block dropped" });
-
-    await Job.findByIdAndDelete(req.params.id);
-
-    const logEntry = new AuditLog({
-      action: "JOB_DELETED",
-      details: `Wiped active job registry record metadata entry: "${job.title}"`,
-      performedBy: req.user._id,
-      ipAddress: req.ip
-    });
-    await logEntry.save();
-
-    res.json({ message: "Job registry item deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server fault during execution block drop mapping", error: error.message });
-  }
-});
-
-// ========================================================
-// 🤖 APPLICATIONS PIPELINE MONITOR & ADVANCED MULTI-FILTERS
-// ========================================================
-
-// GET /api/admin/applications — Advanced Multi-parameter Search Filter System Engine
-router.get("/applications", protect, authorize("admin"), async (req, res) => {
-  try {
-    const { status, scoreMin, scoreMax, skills, jobTitle } = req.query;
-    let queryCondition = {};
-
-    if (status && status !== "all") {
-      queryCondition.status = status;
-    }
-
-    // Dynamic numeric bounds range extraction for AI Analysis parsing scores
-    if (scoreMin || scoreMax) {
-      queryCondition["aiAnalysis.aiScore"] = {};
-      if (scoreMin) queryCondition["aiAnalysis.aiScore"].$gte = parseInt(scoreMin);
-      if (scoreMax) queryCondition["aiAnalysis.aiScore"].$lte = parseInt(scoreMax);
-    }
-
-    // Match skills tokens extracted inside tags array 
-    if (skills) {
-      const skillsArray = skills.split(",").map(skill => skill.trim());
-      queryCondition["aiAnalysis.parsedSkills"] = { $all: skillsArray.map(s => new RegExp(s, "i")) };
-    }
-
-    const applications = await Application.find(queryCondition)
-      .populate({
-        path: "jobId",
-        select: "title company location",
-        match: jobTitle ? { title: { $regex: jobTitle, $options: "i" } } : {}
-      }) 
-      .populate("applicantId", "name email")      
-      .sort({ createdAt: -1 });
-
-    // Filter missing matching models dependencies pointers out
-    const filteredApplications = applications.filter(app => app.jobId !== null);
-
-    res.json(filteredApplications);
-  } catch (error) {
-    res.status(500).json({ message: "Complex filters extraction process fail handler crash", error: error.message });
-  }
-});
-
-// DELETE /api/admin/applications/:id — Purge pipeline metadata index
-router.delete("/applications/:id", protect, authorize("admin"), async (req, res) => {
-  try {
-    const application = await Application.findById(req.params.id);
-    if (!application) return res.status(404).json({ message: "Application process node instance missing" });
-
-    await Application.findByIdAndDelete(req.params.id);
-
-    const logEntry = new AuditLog({
-      action: "APPLICATION_PURGED",
-      details: `Admin purged candidate application record document key identity string: ${req.params.id}`,
-      performedBy: req.user._id,
-      ipAddress: req.ip
-    });
-    await logEntry.save();
-
-    res.json({ message: "Application pipeline reference destroyed smoothly" });
-  } catch (error) {
-    res.status(500).json({ message: "Internal crash cleaning system data registers", error: error.message });
-  }
-});
-
-// ========================================================
-// 📢 BROADCAST ENGINES (NOTIFICATIONS FRAMEWORK)
-// ========================================================
-
-// POST /api/admin/broadcast — Push global notifications alert across sub-panels
 router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
   try {
     const { message, targetGroup } = req.body;
@@ -307,20 +92,17 @@ router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
   }
 });
 
-// GET /api/admin/broadcasts — Public fetch route across applicant and recruiter entrypoints
 router.get("/broadcasts", protect, async (req, res) => {
   try {
     const broadcasts = await Broadcast.find()
       .populate("senderId", "name email")
       .sort({ createdAt: -1 });
-    
     res.json({ success: true, broadcasts });
   } catch (error) {
     res.status(500).json({ message: "Server log verification check error tracing history", error: error.message });
   }
 });
 
-// DELETE /api/admin/broadcast/:id — Purge warning node context from database logs
 router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) => {
   try {
     const broadcast = await Broadcast.findByIdAndDelete(req.params.id);
@@ -334,33 +116,218 @@ router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) =>
     });
     await logEntry.save();
 
-    res.json({ message: "Broadcast instance cleared successfully from cluster servers" });
+    res.json({ message: "Broadcast instance cleared successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error executing purge algorithm on target data array", error: error.message });
+    res.status(500).json({ message: "Server error executing purge algorithm", error: error.message });
   }
 });
 
 // ========================================================
-// 🛡️ SECURITY AUDIT MATRIX OPERATIONS
+// 👥 USER CONTROL MATRIX
 // ========================================================
 
-// GET /api/admin/audit-logs — Administrative security trace history stream
+router.get("/users", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { search, role, status } = req.query;
+    let queryCondition = { role: { $ne: "admin" } };
+
+    if (role) queryCondition.role = role;
+    if (status) queryCondition.status = status;
+    if (search) {
+      queryCondition.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const users = await User.find(queryCondition).select("-password").sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "User master records pull crashed", error: error.message });
+  }
+});
+
+router.patch("/users/:id/status", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { status } = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, { status }, { new: true }).select("-password");
+    if (!user) return res.status(404).json({ message: "User target key not found" });
+
+    const logEntry = new AuditLog({
+      action: "USER_STATUS_UPDATE",
+      details: `Modified access permissions to [${status}] for ${user.name} (${user.email})`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server failure running user status update", error: error.message });
+  }
+});
+
+router.patch("/users/:id/role", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { role } = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select("-password");
+    if (!user) return res.status(404).json({ message: "User record lookup mismatch" });
+
+    const logEntry = new AuditLog({
+      action: "USER_ROLE_MIGRATED",
+      details: `Elevated systemic permissions role to [${role}] for profile: ${user.email}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error shifting privilege mapping", error: error.message });
+  }
+});
+
+router.delete("/users/:id", protect, authorize("admin"), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User missing" });
+    await User.findByIdAndDelete(req.params.id);
+
+    const logEntry = new AuditLog({
+      action: "USER_DELETED",
+      details: `Permanently destroyed account document for [${user.name}] (${user.email})`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+    res.json({ message: "User data wiped successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Database deletion protocol execution error", error: error.message });
+  }
+});
+
+// ========================================================
+// 💼 JOBS MANAGEMENT MODULE
+// ========================================================
+
+router.get("/jobs", protect, authorize("admin"), async (req, res) => {
+  try {
+    const jobs = await Job.find().populate("recruiterId", "name email").sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: "Job logs transaction lookup failure", error: error.message });
+  }
+});
+
+router.patch("/jobs/:id/status", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { status } = req.body;
+    const job = await Job.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!job) return res.status(404).json({ message: "Job document reference empty" });
+
+    const logEntry = new AuditLog({
+      action: "JOB_STATUS_UPDATE",
+      details: `Modified recruitment position status tracking [${job.title}] to flag: ${status}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+    res.json(job);
+  } catch (error) {
+    res.status(500).json({ message: "Job metadata pipeline transformation fault", error: error.message });
+  }
+});
+
+router.delete("/jobs/:id", protect, authorize("admin"), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job item signature missing" });
+    await Job.findByIdAndDelete(req.params.id);
+
+    const logEntry = new AuditLog({
+      action: "JOB_DELETED",
+      details: `Wiped active job registry record metadata entry: "${job.title}"`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+    res.json({ message: "Job registry item deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server fault during execution block drop mapping", error: error.message });
+  }
+});
+
+// ========================================================
+// 🤖 APPLICATIONS MONITOR MATRIX
+// ========================================================
+
+router.get("/applications", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { status, scoreMin, scoreMax, skills, jobTitle } = req.query;
+    let queryCondition = {};
+
+    if (status && status !== "all") queryCondition.status = status;
+
+    if (scoreMin || scoreMax) {
+      queryCondition["aiAnalysis.aiScore"] = {};
+      if (scoreMin) queryCondition["aiAnalysis.aiScore"].$gte = parseInt(scoreMin);
+      if (scoreMax) queryCondition["aiAnalysis.aiScore"].$lte = parseInt(scoreMax);
+    }
+
+    if (skills) {
+      const skillsArray = skills.split(",").map(skill => skill.trim());
+      queryCondition["aiAnalysis.parsedSkills"] = { $all: skillsArray.map(s => new RegExp(s, "i")) };
+    }
+
+    const applications = await Application.find(queryCondition)
+      .populate({
+        path: "jobId",
+        select: "title company location",
+        match: jobTitle ? { title: { $regex: jobTitle, $options: "i" } } : {}
+      }) 
+      .populate("applicantId", "name email")      
+      .sort({ createdAt: -1 });
+
+    const filteredApplications = applications.filter(app => app.jobId !== null);
+    res.json(filteredApplications);
+  } catch (error) {
+    res.status(500).json({ message: "Complex filters extraction process fail", error: error.message });
+  }
+});
+
+router.delete("/applications/:id", protect, authorize("admin"), async (req, res) => {
+  try {
+    const application = await Application.findById(req.params.id);
+    if (!application) return res.status(404).json({ message: "Application process node instance missing" });
+    await Application.findByIdAndDelete(req.params.id);
+
+    const logEntry = new AuditLog({
+      action: "APPLICATION_PURGED",
+      details: `Admin purged candidate application record document key identity string: ${req.params.id}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+    res.json({ message: "Application pipeline reference destroyed" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal crash cleaning system data registers", error: error.message });
+  }
+});
+
+// ========================================================
+// 🛡️ SECURITY AUDIT MATRIX
+// ========================================================
+
 router.get("/audit-logs", protect, authorize("admin"), async (req, res) => {
   try {
-    const logs = await AuditLog.find()
-      .populate("performedBy", "name email")
-      .sort({ createdAt: -1 }); 
+    const logs = await AuditLog.find().populate("performedBy", "name email").sort({ createdAt: -1 }); 
     res.json({ success: true, logs });
   } catch (error) {
     res.status(500).json({ message: "Audit ledger stack transaction extraction failure", error: error.message });
   }
 });
 
-// DELETE /api/admin/audit-logs/purge — Expired tracking system retention database clear engine
 router.delete("/audit-logs/purge", protect, authorize("admin"), async (req, res) => {
   try {
     const { retentionDays } = req.body; 
-    
     let queryCondition = {};
     if (retentionDays) {
       const cutOffDate = new Date();
@@ -369,10 +336,7 @@ router.delete("/audit-logs/purge", protect, authorize("admin"), async (req, res)
     }
 
     const result = await AuditLog.deleteMany(queryCondition);
-    res.json({ 
-      success: true, 
-      message: `System transaction audit records cleared safely. Deleted count tracking: ${result.deletedCount} entries.` 
-    });
+    res.json({ success: true, message: `Purged count: ${result.deletedCount} entries.` });
   } catch (error) {
     res.status(500).json({ message: "Security governance logging sweep failed", error: error.message });
   }
