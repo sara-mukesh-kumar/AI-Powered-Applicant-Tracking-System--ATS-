@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ApplicantApplicationModal from "./ApplicantApplyJob";
 
@@ -48,9 +48,14 @@ function JobDetails() {
   const navigate = useNavigate();
   const location = useLocation();
   const [applicationOpen, setApplicationOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingLoading, setSavingLoading] = useState(false);
 
+  const token = localStorage.getItem("token");
   const receivedJob = location.state?.job;
+
   const job = receivedJob ? {
+    id: receivedJob.id || receivedJob._id,
     title: receivedJob.title || "Untitled role",
     company: receivedJob.company || "Corporate Partner",
     location: receivedJob.location || "Remote",
@@ -73,6 +78,46 @@ function JobDetails() {
       "Excellent team collaboration and communication"
     ]
   } : mockJob;
+
+  const jobId = job.id || job._id;
+
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!token || !jobId) return;
+      try {
+        const savedRes = await fetch("http://localhost:5000/api/applicant/saved-jobs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (savedRes.ok) {
+          const savedData = await savedRes.json();
+          const list = savedData.savedJobs || savedData || [];
+          setIsSaved(list.some(j => (j._id || j.id) === jobId));
+        }
+      } catch (err) {
+        console.error("Check saved status error:", err);
+      }
+    };
+    checkIfSaved();
+  }, [jobId, token]);
+
+  const handleSaveToggle = async () => {
+    if (!token || !jobId) return;
+    setSavingLoading(true);
+    try {
+      const method = isSaved ? "DELETE" : "POST";
+      const res = await fetch(`http://localhost:5000/api/applicant/save/${jobId}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setIsSaved(!isSaved);
+      }
+    } catch (err) {
+      console.error("Save toggle error:", err);
+    } finally {
+      setSavingLoading(false);
+    }
+  };
 
   return (
     <div className="text-slate-900">
@@ -142,14 +187,23 @@ function JobDetails() {
               <h3 className="font-bold">Interested in this role?</h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">Your profile is a strong match for this opportunity.</p>
               <button
-                className="mt-5 w-full rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+                className="mt-5 w-full rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 cursor-pointer"
                 onClick={() => setApplicationOpen(true)}
                 type="button"
               >
                 Apply Now
               </button>
-              <button className="mt-3 w-full rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100" type="button">
-                Save Job
+              <button
+                className={`mt-3 w-full rounded-xl border px-6 py-3 font-semibold transition cursor-pointer ${
+                  isSaved
+                    ? "border-amber-400 bg-amber-50 text-amber-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                }`}
+                onClick={handleSaveToggle}
+                disabled={savingLoading}
+                type="button"
+              >
+                {isSaved ? "Saved ⭐" : "Save Job"}
               </button>
             </section>
           </aside>

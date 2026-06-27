@@ -69,7 +69,7 @@ function ApplicationTracker() {
             className={`rounded-2xl px-5 py-2.5 text-xs font-extrabold transition cursor-pointer ${
               activeTab === tab.value
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                : "bg-slate-50 text-slate-650 hover:bg-slate-100 border border-slate-200/60"
+                : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
             }`}
           >
             {tab.label}
@@ -101,7 +101,7 @@ function ApplicationTracker() {
               >
                 <div>
                   <h4 className="font-extrabold text-base text-slate-900">{app.jobId?.title || "Role Name"}</h4>
-                  <p className="text-xs font-bold text-slate-450 mt-0.5">{app.jobId?.company || "Company"}</p>
+                  <p className="text-xs font-bold text-slate-400 mt-0.5">{app.jobId?.company || "Company"}</p>
                   <p className="text-[10px] text-slate-400 mt-2">Applied on {new Date(app.createdAt).toLocaleDateString()}</p>
                 </div>
 
@@ -144,13 +144,73 @@ function ApplicationTracker() {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-slate-400 uppercase">Pipeline Stage</h4>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className={`w-3.5 h-3.5 rounded-full ${
-                      selectedApp.status === "Rejected" || selectedApp.status === "Withdrawn" ? "bg-rose-500" :
-                      selectedApp.status === "Offered" ? "bg-emerald-500" : "bg-indigo-650 animate-pulse"
-                    }`} />
-                    <span className="font-bold text-slate-800">{selectedApp.status}</span>
+                  <h4 className="font-bold text-slate-400 uppercase mb-3">Application Progress</h4>
+                  <div className="space-y-4 relative pl-5 text-xs">
+                    {/* Line behind stepper */}
+                    <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-100" />
+
+                    {/* Step 1: Applied */}
+                    <div className="flex items-start gap-3 relative">
+                      <div className={`w-4 h-4 rounded-full border-4 border-white ring-2 z-10 shrink-0 ${
+                        ["Applied", "Interview", "Offered"].includes(selectedApp.status)
+                          ? "bg-emerald-500 ring-emerald-100"
+                          : "bg-slate-300 ring-slate-100"
+                      }`} />
+                      <div>
+                        <p className="font-extrabold text-[11px] text-slate-800 uppercase leading-none">Application Submitted</p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1">We received your application details</p>
+                      </div>
+                    </div>
+
+                    {/* Step 2: Interview */}
+                    <div className="flex items-start gap-3 relative">
+                      <div className={`w-4 h-4 rounded-full border-4 border-white ring-2 z-10 shrink-0 ${
+                        ["Interview", "Offered"].includes(selectedApp.status)
+                          ? "bg-emerald-500 ring-emerald-100"
+                          : selectedApp.status === "Applied"
+                            ? "bg-indigo-600 ring-indigo-200 animate-pulse"
+                            : "bg-slate-300 ring-slate-100"
+                      }`} />
+                      <div>
+                        <p className="font-extrabold text-[11px] text-slate-800 uppercase leading-none">Interview Pipeline</p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1 font-medium">
+                          {selectedApp.status === "Interview"
+                            ? "Interview scheduled! Recruiter will contact you."
+                            : ["Offered", "Rejected"].includes(selectedApp.status)
+                              ? "Interview rounds completed"
+                              : "Under review by the hiring team"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 3: Decision */}
+                    <div className="flex items-start gap-3 relative">
+                      <div className={`w-4 h-4 rounded-full border-4 border-white ring-2 z-10 shrink-0 ${
+                        selectedApp.status === "Offered"
+                          ? "bg-emerald-500 ring-emerald-100"
+                          : ["Rejected", "Withdrawn"].includes(selectedApp.status)
+                            ? "bg-rose-500 ring-rose-100"
+                            : "bg-slate-300 ring-slate-100"
+                      }`} />
+                      <div>
+                        <p className="font-extrabold text-[11px] text-slate-800 uppercase leading-none">
+                          {selectedApp.status === "Rejected"
+                            ? "Rejected"
+                            : selectedApp.status === "Withdrawn"
+                              ? "Withdrawn"
+                              : "Offer / Final Decision"}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1 font-medium">
+                          {selectedApp.status === "Offered"
+                            ? "Congratulations! You received an offer."
+                            : selectedApp.status === "Rejected"
+                              ? "Thank you for your time. Best of luck!"
+                              : selectedApp.status === "Withdrawn"
+                                ? "You withdrew this application"
+                                : "Awaiting final decision"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -158,7 +218,7 @@ function ApplicationTracker() {
                   <h4 className="font-bold text-slate-400 uppercase">Action Engine</h4>
                   <button
                     onClick={() => alert("Recruiter has been notified of your follow-up request!")}
-                    className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl cursor-pointer text-center transition"
+                    className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl cursor-pointer text-center active:scale-[0.98] transition-all duration-250 shadow-md shadow-indigo-600/5 hover:shadow-indigo-600/10"
                   >
                     Follow up with Recruiter
                   </button>

@@ -170,7 +170,7 @@ function ApplicantProfile() {
   if (loading && !profile) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-slate-500 font-bold">Loading candidate profile...</div>
+        <div className="text-indigo-650 font-bold">Loading candidate profile...</div>
       </div>
     );
   }
@@ -184,7 +184,7 @@ function ApplicantProfile() {
     .toUpperCase();
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fade-in text-slate-900">
 
       {/* Alert overlays */}
       {success && (
@@ -241,7 +241,7 @@ function ApplicantProfile() {
       {/* Main Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Left Side Info / Resume Upload */}
+        {/* Left Side Info / Resume Upload & Skills */}
         <div className="space-y-6">
 
           {/* Resume Upload parsing zone */}
@@ -283,15 +283,38 @@ function ApplicantProfile() {
           {/* Contact details */}
           <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
             <h3 className="text-lg font-bold text-slate-900">Personal details</h3>
-            <div className="space-y-3.5 text-xs">
+            <div className="space-y-3.5 text-xs font-semibold text-slate-700">
               <div>
                 <p className="font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
-                <p className="font-bold text-slate-700 mt-1 break-all">{profile?.email}</p>
+                <p className="text-sm font-bold text-slate-800 mt-1 break-all">{profile?.email}</p>
               </div>
               <div>
                 <p className="font-bold text-slate-400 uppercase tracking-wider">Location</p>
-                <p className="font-bold text-slate-700 mt-1">{profile?.location || "Not specified"}</p>
+                <p className="text-sm font-bold text-slate-800 mt-1">{profile?.location || "Not specified"}</p>
               </div>
+            </div>
+          </div>
+
+          {/* Skills Tags block (Moved here for grid balance) */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Skills</h3>
+            <div className="flex flex-wrap gap-2">
+              {(profile?.skills || []).map((skill, index) => (
+                <div key={index} className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100/60 rounded-full px-3 py-1.5 text-xs font-bold text-indigo-700">
+                  <span>{skill}</span>
+                  <button onClick={() => handleRemoveSkill(skill)} className="hover:text-rose-600 text-[10px] cursor-pointer">✕</button>
+                </div>
+              ))}
+            </div>
+            <div className="max-w-xs mt-3">
+              <input
+                type="text"
+                placeholder="Type a skill and hit Enter"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={handleAddSkill}
+              />
             </div>
           </div>
 
@@ -309,7 +332,7 @@ function ApplicantProfile() {
                   <label className="block text-xs font-bold text-slate-400 uppercase">Full Name</label>
                   <input
                     type="text"
-                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                     value={profileDraft.name || ""}
                     onChange={(e) => setProfileDraft({ ...profileDraft, name: e.target.value })}
                   />
@@ -318,7 +341,7 @@ function ApplicantProfile() {
                   <label className="block text-xs font-bold text-slate-400 uppercase">Designation</label>
                   <input
                     type="text"
-                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                     value={profileDraft.designation || ""}
                     onChange={(e) => setProfileDraft({ ...profileDraft, designation: e.target.value })}
                   />
@@ -327,7 +350,7 @@ function ApplicantProfile() {
                   <label className="block text-xs font-bold text-slate-400 uppercase">Location</label>
                   <input
                     type="text"
-                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                     value={profileDraft.location || ""}
                     onChange={(e) => setProfileDraft({ ...profileDraft, location: e.target.value })}
                   />
@@ -335,7 +358,7 @@ function ApplicantProfile() {
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-400 uppercase">Summary</label>
                   <textarea
-                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none min-h-20"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition min-h-20"
                     value={profileDraft.summary || ""}
                     onChange={(e) => setProfileDraft({ ...profileDraft, summary: e.target.value })}
                   />
@@ -346,7 +369,7 @@ function ApplicantProfile() {
                   handleUpdateProfile(profileDraft);
                   setEditingField(null);
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 px-5 rounded-xl cursor-pointer transition active:scale-[0.98]"
               >
                 Save Details
               </button>
@@ -357,29 +380,6 @@ function ApplicantProfile() {
           <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
             <h3 className="text-lg font-bold text-slate-900">About Me</h3>
             <p className="text-xs text-slate-600 leading-relaxed">{profile?.summary || "Add a profile summary using the Edit Personal Info button."}</p>
-          </div>
-
-          {/* Skills Tags block */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-            <h3 className="text-lg font-bold text-slate-900">Skills</h3>
-            <div className="flex flex-wrap gap-2">
-              {(profile?.skills || []).map((skill, index) => (
-                <div key={index} className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100/60 rounded-full px-3 py-1.5 text-xs font-bold text-indigo-700">
-                  <span>{skill}</span>
-                  <button onClick={() => handleRemoveSkill(skill)} className="hover:text-rose-600 text-[10px] cursor-pointer">✕</button>
-                </div>
-              ))}
-            </div>
-            <div className="max-w-xs mt-3">
-              <input
-                type="text"
-                placeholder="Type a skill and hit Enter"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={handleAddSkill}
-              />
-            </div>
           </div>
 
           {/* Experience Timeline */}
@@ -398,7 +398,7 @@ function ApplicantProfile() {
                     <div>
                       <h4 className="font-extrabold text-sm text-slate-900">{exp.title}</h4>
                       <p className="text-xs font-bold text-slate-400 mt-0.5">{exp.company} · <span className="text-indigo-600 font-semibold">{exp.duration}</span></p>
-                      <p className="text-xs text-slate-550 leading-relaxed mt-2">{exp.description}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed mt-2">{exp.description}</p>
                     </div>
                     <button
                       onClick={() => handleRemoveExperience(idx)}
@@ -412,40 +412,40 @@ function ApplicantProfile() {
             </div>
 
             {/* Add Exp Form */}
-            <div className="bg-slate-55/40 border border-slate-100 rounded-2xl p-4 space-y-3">
+            <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 space-y-3">
               <p className="text-xs font-black text-slate-700 uppercase">Add Work Experience</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="text"
                   placeholder="Company Name"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newExp.company}
                   onChange={(e) => setNewExp({ ...newExp, company: e.target.value })}
                 />
                 <input
                   type="text"
                   placeholder="Job Title"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newExp.title}
                   onChange={(e) => setNewExp({ ...newExp, title: e.target.value })}
                 />
                 <input
                   type="text"
                   placeholder="Duration (e.g. 2022 - Present)"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newExp.duration}
                   onChange={(e) => setNewExp({ ...newExp, duration: e.target.value })}
                 />
                 <textarea
                   placeholder="Description of role"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2 min-h-16"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2 min-h-16 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newExp.description}
                   onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
                 />
               </div>
               <button
                 onClick={handleAddExperience}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition active:scale-[0.98]"
               >
                 + Add experience
               </button>
@@ -464,7 +464,7 @@ function ApplicantProfile() {
                   <div className="flex justify-between items-start gap-4">
                     <div>
                       <h4 className="font-extrabold text-sm text-slate-900">{edu.degree}</h4>
-                      <p className="text-xs font-bold text-slate-400 mt-0.5">{edu.school} · <span className="text-purple-650 font-semibold">{edu.duration}</span></p>
+                      <p className="text-xs font-bold text-slate-400 mt-0.5">{edu.school} · <span className="text-purple-600 font-semibold">{edu.duration}</span></p>
                     </div>
                     <button
                       onClick={() => handleRemoveEducation(idx)}
@@ -478,34 +478,34 @@ function ApplicantProfile() {
             </div>
 
             {/* Add Edu Form */}
-            <div className="bg-slate-55/40 border border-slate-100 rounded-2xl p-4 space-y-3">
+            <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 space-y-3">
               <p className="text-xs font-black text-slate-700 uppercase">Add Education / Certification</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="text"
                   placeholder="Degree / Certificate"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newEdu.degree}
                   onChange={(e) => setNewEdu({ ...newEdu, degree: e.target.value })}
                 />
                 <input
                   type="text"
                   placeholder="School / Institution"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newEdu.school}
                   onChange={(e) => setNewEdu({ ...newEdu, school: e.target.value })}
                 />
                 <input
                   type="text"
                   placeholder="Duration (e.g. 2018 - 2022)"
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2"
+                  className="bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none sm:col-span-2 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition"
                   value={newEdu.duration}
                   onChange={(e) => setNewEdu({ ...newEdu, duration: e.target.value })}
                 />
               </div>
               <button
                 onClick={handleAddEducation}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition"
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition active:scale-[0.98]"
               >
                 + Add education
               </button>

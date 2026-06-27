@@ -174,7 +174,7 @@ function SavedJobs() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-bold text-slate-900">Bookmarks</h3>
-            <span className="text-xs font-extrabold text-indigo-650 bg-indigo-55/60 px-2.5 py-1 rounded">
+            <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded">
               {savedJobs.length} Bookmarked
             </span>
           </div>
@@ -266,7 +266,7 @@ function SavedJobs() {
 
               <button
                 type="submit"
-                className="w-full bg-indigo-650 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl transition cursor-pointer"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl transition cursor-pointer"
               >
                 Create Alert
               </button>
@@ -284,7 +284,7 @@ function SavedJobs() {
                   <div key={idx} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <div>
                       <p className="text-xs font-bold text-slate-800">🔍 {alert.keywords}</p>
-                      <p className="text-[10px] text-slate-450 mt-0.5">📍 {alert.location || "Anywhere"} · {alert.frequency}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">📍 {alert.location || "Anywhere"} · {alert.frequency}</p>
                     </div>
                     <button
                       onClick={() => handleDeleteAlert(idx)}

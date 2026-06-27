@@ -156,32 +156,70 @@ function ApplicantDashboard() {
       <section className="grid gap-6 lg:grid-cols-2">
         {/* Profile Completion */}
         <article className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100/60 hover:shadow-md transition duration-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Profile Strength</p>
-              <h2 className="mt-1 text-lg font-black text-slate-800">Completion Status</h2>
+          <div className="flex flex-col sm:flex-row items-center gap-6 justify-between">
+            <div className="space-y-4 flex-1">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Profile Strength</p>
+                <h2 className="mt-1 text-lg font-black text-slate-800">Completion Status</h2>
+              </div>
+              <div className="grid gap-2.5 text-xs text-slate-500 font-semibold">
+                <div className="flex items-center gap-2">
+                  <span className={profile?.name ? "text-emerald-500 font-bold" : "text-slate-300"}>✓</span> Name verified
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={profile?.skills?.length > 0 ? "text-emerald-500 font-bold" : "text-slate-300"}>✓</span> Professional skills updated
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={profile?.resumeUrl ? "text-emerald-500 font-bold" : "text-slate-300"}>✓</span> Resume uploaded
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={profile?.experience?.length > 0 ? "text-emerald-500 font-bold" : "text-slate-300"}>✓</span> Work history updated
+                </div>
+              </div>
             </div>
-            <span className="text-sm font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">{completionPct}%</span>
+            
+            {/* SVG Circular Ring */}
+            <div className="relative shrink-0 flex items-center justify-center">
+              <svg className="w-24 h-24 transform -rotate-90">
+                {/* Background Ring */}
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="38"
+                  stroke="#f8fafc"
+                  strokeWidth="7"
+                  fill="transparent"
+                />
+                {/* Active Progress Ring */}
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="38"
+                  stroke="url(#progressGrad)"
+                  strokeWidth="7"
+                  fill="transparent"
+                  strokeDasharray={238.76}
+                  strokeDashoffset={238.76 - (238.76 * completionPct) / 100}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out"
+                />
+                {/* Defs for Gradient */}
+                <defs>
+                  <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#a855f7" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute flex flex-col items-center justify-center">
+                <span className="text-lg font-black text-slate-800">{completionPct}%</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Strength</span>
+              </div>
+            </div>
           </div>
-          <div className="mt-6 h-2 rounded-full bg-slate-100 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style={{ width: `${completionPct}%` }} />
-          </div>
-          <div className="mt-6 grid gap-2.5 text-xs text-slate-500 font-semibold sm:grid-cols-2">
-            <div className="flex items-center gap-2">
-              <span className={profile?.name ? "text-emerald-500" : "text-slate-300"}>✓</span> Name verified
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={profile?.skills?.length > 0 ? "text-emerald-500" : "text-slate-300"}>✓</span> Professional skills updated
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={profile?.resumeUrl ? "text-emerald-500" : "text-slate-300"}>✓</span> Resume uploaded
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={profile?.experience?.length > 0 ? "text-emerald-500" : "text-slate-300"}>✓</span> Work history updated
-            </div>
-          </div>
+
           <button
-            className="mt-6 w-full rounded-2xl bg-indigo-50 py-3 text-xs font-bold text-indigo-600 hover:bg-indigo-100/80 transition cursor-pointer"
+            className="mt-6 w-full rounded-2xl bg-indigo-50 py-3.5 text-xs font-bold text-indigo-600 hover:bg-indigo-100/80 hover:shadow-sm active:scale-[0.98] transition-all cursor-pointer"
             onClick={() => navigate("/applicant/profile")}
             type="button"
           >
