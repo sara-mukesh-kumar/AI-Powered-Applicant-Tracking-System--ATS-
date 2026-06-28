@@ -11,17 +11,12 @@ const router = express.Router();
 // ========================================================
 // ✉️ TRANSACTIONAL EMAIL ENDPOINT (MAPPED AT TOP)
 // ========================================================
-
-// POST /api/admin/send-email — Dedicated channel for single candidate mailing
 router.post("/send-email", protect, authorize("admin"), async (req, res) => {
   try {
     const { recipientEmail, subject, bodyText } = req.body;
-
     if (!recipientEmail || !bodyText) {
       return res.status(400).json({ message: "Recipient address and body text structure are required" });
     }
-
-    // 🛡️ Trigger Log strictly with unique EMAIL_DISPATCHED action status!
     const logEntry = new AuditLog({
       action: "EMAIL_DISPATCHED", 
       details: `Admin dispatched system communication template to candidate [${recipientEmail}] | Subject: ${subject}`,
@@ -29,7 +24,6 @@ router.post("/send-email", protect, authorize("admin"), async (req, res) => {
       ipAddress: req.ip
     });
     await logEntry.save();
-
     return res.status(200).json({ success: true, message: "Transactional system communication logged safely" });
   } catch (error) {
     return res.status(500).json({ message: "Email logger transmission failure", error: error.message });
@@ -37,9 +31,8 @@ router.post("/send-email", protect, authorize("admin"), async (req, res) => {
 });
 
 // ========================================================
-// 📊 DASHBOARD METRICS & CORE TRACKING
+// 📊 DASHBOARD METRICS, AI COUNTERS & AGGREGATIONS
 // ========================================================
-
 router.get("/stats", protect, authorize("admin"), async (req, res) => {
   try {
     const totalJobs = await Job.countDocuments();
@@ -47,11 +40,59 @@ router.get("/stats", protect, authorize("admin"), async (req, res) => {
     const totalApplicants = await User.countDocuments({ role: "applicant" });
     const totalApplications = await Application.countDocuments(); 
 
+    // ✅ NEW: AI Usage Count & Failed Parsing Metrics
+    const aiUsageCount = await Application.countDocuments({ aiScore: { $exists: true, $ne: null } });
+    const failedParsingCount = await Application.countDocuments({ 
+      $or: [
+        { aiScore: { $exists: false } },
+        { aiScore: null }
+      ]
+    }) || 0;
+
+    // 🧠 Dynamic Aggregation for AI Score Distribution Breakdown
+    const scoreBuckets = await Application.aggregate([
+      {
+        $bucket: {
+          groupBy: { $ifNull: ["$aiScore", 0] },
+          boundaries: [0, 40, 70, 85, 101],
+          default: "Unknown",
+          output: { count: { $sum: 1 } }
+        }
+      }
+    ]).catch(() => []);
+
+    const formattedScoreDistribution = [
+      { range: "0-40 (Critical)", count: 0 },
+      { range: "41-70 (Average)", count: 0 },
+      { range: "71-85 (Competitive)", count: 0 },
+      { range: "86-100 (Exceptional)", count: 0 }
+    ];
+
+    scoreBuckets.forEach(b => {
+      if (b._id === 0) formattedScoreDistribution[0].count = b.count;
+      if (b._id === 40) formattedScoreDistribution[1].count = b.count;
+      if (b._id === 70) formattedScoreDistribution[2].count = b.count;
+      if (b._id === 85) formattedScoreDistribution[3].count = b.count;
+    });
+
+    // Fallback static structure until teammate creates "missingSkills" schema
+    const formattedMissingSkills = [
+      { skill: "DOCKER", frequency: 12 },
+      { skill: "TYPESCRIPT", frequency: 9 },
+      { skill: "AWS S3", frequency: 8 },
+      { skill: "REDIS QUEUES", frequency: 6 },
+      { skill: "GRAPHQL", frequency: 4 }
+    ];
+
     res.json({
       totalJobs,
       totalApplications, 
       totalRecruiters,
       totalApplicants,
+      aiUsageCount,         // Exported to Frontend
+      failedParsingCount,   // Exported to Frontend
+      scoreDistribution: formattedScoreDistribution,
+      missingSkills: formattedMissingSkills
     });
   } catch (error) {
     res.status(500).json({ message: "Server error during counters processing", error: error.message });
@@ -61,21 +102,13 @@ router.get("/stats", protect, authorize("admin"), async (req, res) => {
 // ========================================================
 // 📢 BROADCAST ENGINES (GLOBAL BANNER NOTIFICATIONS)
 // ========================================================
-
 router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
   try {
     const { message, targetGroup } = req.body;
-
     if (!message || message.trim() === "") {
       return res.status(400).json({ message: "Broadcast required parameter text field is null" });
     }
-
-    const newBroadcast = new Broadcast({
-      message,
-      targetGroup: targetGroup || "all",
-      senderId: req.user._id,
-    });
-
+    const newBroadcast = new Broadcast({ message, targetGroup: targetGroup || "all", senderId: req.user._id });
     await newBroadcast.save();
 
     const logEntry = new AuditLog({
@@ -85,7 +118,6 @@ router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
       ipAddress: req.ip
     });
     await logEntry.save();
-
     res.status(201).json({ success: true, broadcast: newBroadcast });
   } catch (error) {
     res.status(500).json({ message: "Broadcast deployment schema creation block failed", error: error.message });
@@ -94,9 +126,7 @@ router.post("/broadcast", protect, authorize("admin"), async (req, res) => {
 
 router.get("/broadcasts", protect, async (req, res) => {
   try {
-    const broadcasts = await Broadcast.find()
-      .populate("senderId", "name email")
-      .sort({ createdAt: -1 });
+    const broadcasts = await Broadcast.find().populate("senderId", "name email").sort({ createdAt: -1 });
     res.json({ success: true, broadcasts });
   } catch (error) {
     res.status(500).json({ message: "Server log verification check error tracing history", error: error.message });
@@ -107,7 +137,6 @@ router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) =>
   try {
     const broadcast = await Broadcast.findByIdAndDelete(req.params.id);
     if (!broadcast) return res.status(404).json({ message: "System notice object lookup failed" });
-
     const logEntry = new AuditLog({
       action: "BROADCAST_DELETED",
       details: `Admin discarded alert warning module broadcast banner target container configuration`,
@@ -115,7 +144,6 @@ router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) =>
       ipAddress: req.ip
     });
     await logEntry.save();
-
     res.json({ message: "Broadcast instance cleared successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error executing purge algorithm", error: error.message });
@@ -125,12 +153,10 @@ router.delete("/broadcast/:id", protect, authorize("admin"), async (req, res) =>
 // ========================================================
 // 👥 USER CONTROL MATRIX
 // ========================================================
-
 router.get("/users", protect, authorize("admin"), async (req, res) => {
   try {
     const { search, role, status } = req.query;
     let queryCondition = { role: { $ne: "admin" } };
-
     if (role) queryCondition.role = role;
     if (status) queryCondition.status = status;
     if (search) {
@@ -139,7 +165,6 @@ router.get("/users", protect, authorize("admin"), async (req, res) => {
         { email: { $regex: search, $options: "i" } }
       ];
     }
-
     const users = await User.find(queryCondition).select("-password").sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
@@ -152,7 +177,6 @@ router.patch("/users/:id/status", protect, authorize("admin"), async (req, res) 
     const { status } = req.body;
     const user = await User.findByIdAndUpdate(req.params.id, { status }, { new: true }).select("-password");
     if (!user) return res.status(404).json({ message: "User target key not found" });
-
     const logEntry = new AuditLog({
       action: "USER_STATUS_UPDATE",
       details: `Modified access permissions to [${status}] for ${user.name} (${user.email})`,
@@ -171,7 +195,6 @@ router.patch("/users/:id/role", protect, authorize("admin"), async (req, res) =>
     const { role } = req.body;
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select("-password");
     if (!user) return res.status(404).json({ message: "User record lookup mismatch" });
-
     const logEntry = new AuditLog({
       action: "USER_ROLE_MIGRATED",
       details: `Elevated systemic permissions role to [${role}] for profile: ${user.email}`,
@@ -190,7 +213,6 @@ router.delete("/users/:id", protect, authorize("admin"), async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User missing" });
     await User.findByIdAndDelete(req.params.id);
-
     const logEntry = new AuditLog({
       action: "USER_DELETED",
       details: `Permanently destroyed account document for [${user.name}] (${user.email})`,
@@ -207,7 +229,6 @@ router.delete("/users/:id", protect, authorize("admin"), async (req, res) => {
 // ========================================================
 // 💼 JOBS MANAGEMENT MODULE
 // ========================================================
-
 router.get("/jobs", protect, authorize("admin"), async (req, res) => {
   try {
     const jobs = await Job.find().populate("recruiterId", "name email").sort({ createdAt: -1 });
@@ -222,7 +243,6 @@ router.patch("/jobs/:id/status", protect, authorize("admin"), async (req, res) =
     const { status } = req.body;
     const job = await Job.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!job) return res.status(404).json({ message: "Job document reference empty" });
-
     const logEntry = new AuditLog({
       action: "JOB_STATUS_UPDATE",
       details: `Modified recruitment position status tracking [${job.title}] to flag: ${status}`,
@@ -241,7 +261,6 @@ router.delete("/jobs/:id", protect, authorize("admin"), async (req, res) => {
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: "Job item signature missing" });
     await Job.findByIdAndDelete(req.params.id);
-
     const logEntry = new AuditLog({
       action: "JOB_DELETED",
       details: `Wiped active job registry record metadata entry: "${job.title}"`,
@@ -258,34 +277,24 @@ router.delete("/jobs/:id", protect, authorize("admin"), async (req, res) => {
 // ========================================================
 // 🤖 APPLICATIONS MONITOR MATRIX
 // ========================================================
-
 router.get("/applications", protect, authorize("admin"), async (req, res) => {
   try {
     const { status, scoreMin, scoreMax, skills, jobTitle } = req.query;
     let queryCondition = {};
-
     if (status && status !== "all") queryCondition.status = status;
-
     if (scoreMin || scoreMax) {
-      queryCondition["aiAnalysis.aiScore"] = {};
-      if (scoreMin) queryCondition["aiAnalysis.aiScore"].$gte = parseInt(scoreMin);
-      if (scoreMax) queryCondition["aiAnalysis.aiScore"].$lte = parseInt(scoreMax);
+      queryCondition["aiScore"] = {};
+      if (scoreMin) queryCondition["aiScore"].$gte = parseInt(scoreMin);
+      if (scoreMax) queryCondition["aiScore"].$lte = parseInt(scoreMax);
     }
-
     if (skills) {
       const skillsArray = skills.split(",").map(skill => skill.trim());
-      queryCondition["aiAnalysis.parsedSkills"] = { $all: skillsArray.map(s => new RegExp(s, "i")) };
+      queryCondition["extractedSkills"] = { $all: skillsArray.map(s => new RegExp(s, "i")) };
     }
-
     const applications = await Application.find(queryCondition)
-      .populate({
-        path: "jobId",
-        select: "title company location",
-        match: jobTitle ? { title: { $regex: jobTitle, $options: "i" } } : {}
-      }) 
+      .populate({ path: "jobId", select: "title company location", match: jobTitle ? { title: { $regex: jobTitle, $options: "i" } } : {} }) 
       .populate("applicantId", "name email")      
       .sort({ createdAt: -1 });
-
     const filteredApplications = applications.filter(app => app.jobId !== null);
     res.json(filteredApplications);
   } catch (error) {
@@ -298,7 +307,6 @@ router.delete("/applications/:id", protect, authorize("admin"), async (req, res)
     const application = await Application.findById(req.params.id);
     if (!application) return res.status(404).json({ message: "Application process node instance missing" });
     await Application.findByIdAndDelete(req.params.id);
-
     const logEntry = new AuditLog({
       action: "APPLICATION_PURGED",
       details: `Admin purged candidate application record document key identity string: ${req.params.id}`,
@@ -315,7 +323,6 @@ router.delete("/applications/:id", protect, authorize("admin"), async (req, res)
 // ========================================================
 // 🛡️ SECURITY AUDIT MATRIX
 // ========================================================
-
 router.get("/audit-logs", protect, authorize("admin"), async (req, res) => {
   try {
     const logs = await AuditLog.find().populate("performedBy", "name email").sort({ createdAt: -1 }); 
@@ -334,7 +341,6 @@ router.delete("/audit-logs/purge", protect, authorize("admin"), async (req, res)
       cutOffDate.setDate(cutOffDate.getDate() - parseInt(retentionDays));
       queryCondition = { createdAt: { $lt: cutOffDate } };
     }
-
     const result = await AuditLog.deleteMany(queryCondition);
     res.json({ success: true, message: `Purged count: ${result.deletedCount} entries.` });
   } catch (error) {
