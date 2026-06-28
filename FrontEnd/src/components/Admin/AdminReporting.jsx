@@ -5,11 +5,17 @@ import {
 } from "recharts";
 
 export default function AdminReporting() {
-  const [stats, setStats] = useState({ totalJobs: 0, totalApplications: 0, totalRecruiters: 0, totalApplicants: 0 });
+  const [stats, setStats] = useState({ 
+    totalJobs: 0, 
+    totalApplications: 0, 
+    totalRecruiters: 0, 
+    totalApplicants: 0,
+    scoreDistribution: [],
+    missingSkills: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // System-wide growth tracking trend mock datasets
   const monthlyTrendData = [
     { month: "Jan", applications: 35, jobs: 12 },
     { month: "Feb", applications: 52, jobs: 18 },
@@ -19,21 +25,13 @@ export default function AdminReporting() {
     { month: "Jun", applications: 135, jobs: 40 },
   ];
 
-  // AI Funnel status conversion ratio mapping parameters
-  const hiringFunnelData = [
-    { name: "Applied Pool", count: 280, fill: "#3b82f6" },
-    { name: "AI Shortlisted", count: 140, fill: "#10b981" },
-    { name: "System Rejected", count: 90, fill: "#ef4444" },
-  ];
-
-  // Tech stack domain distribution matrix 
   const domainAllocationData = [
     { name: "Frontend openings", value: 45 },
     { name: "Backend Core", value: 35 },
     { name: "AI & Data Track", value: 20 },
   ];
 
-  const COLOR_PALETTE = ["#3b82f6", "#10b981", "#8b5cf6"];
+  const COLOR_PALETTE = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444"];
 
   useEffect(() => {
     fetchLiveStatsEngine();
@@ -69,15 +67,14 @@ export default function AdminReporting() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Module Summary Header Description */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">System Performance Analytics</h1>
-          <p className="text-sm text-gray-500">Audit system-wide resource distribution profiles, growth trajectories, and metrics funnel.</p>
+          <p className="text-sm text-gray-500">Audit system-wide resource distribution profiles, AI insights, and logs.</p>
         </div>
         <button 
           onClick={fetchLiveStatsEngine}
-          className="text-xs font-semibold bg-gray-900 text-white hover:bg-gray-800 px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
+          className="text-xs font-semibold bg-gray-900 text-white hover:bg-gray-800 px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer outline-none"
         >
           🔄 Refresh Analytics Stream
         </button>
@@ -87,7 +84,7 @@ export default function AdminReporting() {
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">{error}</div>
       )}
 
-      {/* Raw Metrics Redirection Counters Grid Block */}
+      {/* Counters */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-xs">
           <div className="text-xs font-bold text-gray-400 uppercase">Live Openings</div>
@@ -107,14 +104,14 @@ export default function AdminReporting() {
         </div>
       </div>
 
-      {/* Primary Chart Visualization Layer Layout */}
+      {/* Main Grid Visuals */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         
-        {/* 1. Line Chart - Month-on-Month System Traction Trend Line */}
+        {/* 1. Month-on-Month Trends */}
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-xs space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Application Trajectory Feed</h3>
-            <p className="text-xs text-gray-400">Linear progression mapping cross-checking platform growth parameters.</p>
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Platform Activity Timeline</h3>
+            <p className="text-xs text-gray-400">Month-on-month processing metrics timeline growth trajectory check.</p>
           </div>
           <div className="h-72 w-full text-xs">
             <ResponsiveContainer width="100%" height="100%">
@@ -131,36 +128,55 @@ export default function AdminReporting() {
           </div>
         </div>
 
-        {/* 2. Bar Chart - AI Screening Conversion Funnel Metrics */}
+        {/* ✅ 2. FIX: AI Resume Score Distribution Matrix Bar Chart */}
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-xs space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Hiring Funnel Conversion Ratio</h3>
-            <p className="text-xs text-gray-400">Visual data matrix highlighting screening stage drop-off limits.</p>
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">AI Score Distribution Metrics</h3>
+            <p className="text-xs text-gray-400">Platform candidate quality scores mapped via core aggregation filters.</p>
           </div>
           <div className="h-72 w-full text-xs">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hiringFunnelData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={stats.scoreDistribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" stroke="#9ca3af" />
+                <XAxis dataKey="range" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
                 <Tooltip cursor={{ fill: "#f9fafb" }} />
-                <Bar dataKey="count" name="Candidates Count" radius={[6, 6, 0, 0]} barSize={38} />
+                <Bar dataKey="count" name="Resumes Count" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={34} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* 3. Pie Chart - Domain-wise Category Mappings (Full Width Footer Span Block) */}
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-xs space-y-4 xl:col-span-2 max-w-2xl mx-auto w-full">
-          <div className="text-center">
-            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Tech Domain Allocation Profile</h3>
-            <p className="text-xs text-gray-400">Segmentation mapping current structural pipeline load metrics balance.</p>
+        {/* ✅ 3. FIX: Top Missing Skills Frequency Bar Chart Block */}
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-xs space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Top Missing Skills Registry</h3>
+            <p className="text-xs text-gray-400">High-demand stack gaps evaluated across system parsing models.</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-around gap-6 h-64">
-            <div className="h-full w-60 text-xs">
+          <div className="h-72 w-full text-xs">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart layout="vertical" data={stats.missingSkills} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                <XAxis type="number" stroke="#9ca3af" />
+                <YAxis dataKey="skill" type="category" stroke="#9ca3af" width={90} />
+                <Tooltip cursor={{ fill: "#f9fafb" }} />
+                <Bar dataKey="frequency" name="Missing Frequency" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={18} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 4. Domain Allocation */}
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-xs space-y-4 max-w-xl mx-auto w-full">
+          <div className="text-center">
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Tech Domain Allocation</h3>
+            <p className="text-xs text-gray-400">Distribution mapped against system sector active logs.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-around gap-6 h-56">
+            <div className="h-full w-48 text-xs">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={domainAllocationData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value">
+                  <Pie data={domainAllocationData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
                     {domainAllocationData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLOR_PALETTE[index % COLOR_PALETTE.length]} />
                     ))}
@@ -169,13 +185,12 @@ export default function AdminReporting() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            {/* Legend Labels Mapping panel */}
-            <div className="space-y-2.5 text-sm text-gray-600">
+            <div className="space-y-2 text-xs text-gray-600">
               {domainAllocationData.map((item, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLOR_PALETTE[index] }} />
+                <div key={index} className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLOR_PALETTE[index] }} />
                   <span className="font-semibold text-gray-800">{item.name}:</span>
-                  <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-sm font-bold">({item.value}%)</span>
+                  <span className="text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-xs font-bold">({item.value}%)</span>
                 </div>
               ))}
             </div>

@@ -1,273 +1,37 @@
-// import { useState, useEffect } from "react";
-// import { useNavigate, useLocation } from "react-router-dom";
-
-// const roleBadge = (role) => {
-//   if (role === "recruiter") return "bg-purple-100 text-purple-700 capitalize";
-//   if (role === "applicant") return "bg-blue-100 text-blue-700 capitalize";
-//   return "bg-gray-100 text-gray-700 capitalize";
-// };
-
-// const statusBadge = (status) => {
-//   if (status === "active") return "bg-green-100 text-green-700 capitalize";
-//   if (status === "pending") return "bg-yellow-100 text-yellow-700 capitalize";
-//   if (status === "suspended") return "bg-red-100 text-red-700 capitalize";
-//   return "bg-gray-100 text-gray-700 capitalize";
-// };
-
-// export default function UserManagement() {
-//   const location = useLocation();
-//   const navigate = useNavigate();
-  
-//   const [users, setUsers] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-//   const [search, setSearch] = useState("");
-  
-//   const [roleFilter, setRoleFilter] = useState(location.state?.filterRole || "all");
-//   const [statusFilter, setStatusFilter] = useState("all");
-
-//   const token = localStorage.getItem("token");
-
-//   useEffect(() => {
-//     if (location.state?.filterRole) {
-//       setRoleFilter(location.state.filterRole);
-//     }
-//   }, [location.state]);
-
-//   useEffect(() => {
-//     const fetchUsers = async () => {
-//       try {
-//         const res = await fetch("/api/admin/users", {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-
-//         if (res.status === 401 || res.status === 403) {
-//           navigate("/"); 
-//           return;
-//         }
-
-//         const data = await res.json();
-//         setUsers(data);
-//       } catch (err) {
-//         setError("Users load nahi ho sake");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchUsers();
-//   }, [token, navigate]);
-
-//   const filteredUsers = users.filter((user) => {
-//     const matchSearch =
-//       user.name?.toLowerCase().includes(search.toLowerCase()) ||
-//       user.email?.toLowerCase().includes(search.toLowerCase());
-//     const matchRole = roleFilter === "all" || user.role === roleFilter;
-//     const matchStatus = statusFilter === "all" || user.status === statusFilter;
-//     return matchSearch && matchRole && matchStatus;
-//   });
-
-//   const handleStatusChange = async (id, newStatus) => {
-//     try {
-//       const res = await fetch(`/api/admin/users/${id}/status`, {
-//         method: "PATCH",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${token}`,
-//         },
-//         body: JSON.stringify({ status: newStatus }),
-//       });
-
-//       if (res.ok) {
-//         setUsers((prev) =>
-//           prev.map((user) =>
-//             user._id === id ? { ...user, status: newStatus } : user
-//           )
-//         );
-//       }
-//     } catch (err) {
-//       setError("Status update nahi ho saka");
-//     }
-//   };
-
-//   const handleDelete = async (id) => {
-//     if (!window.confirm("Are you sure you want to delete this user?")) return;
-
-//     try {
-//       const res = await fetch(`/api/admin/users/${id}`, {
-//         method: "DELETE",
-//         headers: { Authorization: `Bearer ${token}` },
-//       });
-
-//       if (res.ok) {
-//         setUsers((prev) => prev.filter((user) => user._id !== id));
-//       }
-//     } catch (err) {
-//       setError("User delete nahi ho saka");
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex items-center justify-center h-64">
-//         <p className="text-gray-400 text-lg font-medium">Loading users...</p>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="space-y-6">
-//       {/* Dynamic Responsive Typography Headers */}
-//       <div>
-//         <h2 className="text-xl sm:text-2xl font-bold text-gray-800">User Management</h2>
-//         <p className="text-gray-500 text-xs sm:text-sm mt-1">Manage all recruiters and applicants</p>
-//       </div>
-
-//       {error && (
-//         <div className="bg-red-100 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
-//       )}
-
-//       {/* Responsive Filters Stack Control */}
-//       <div className="bg-white rounded-2xl shadow p-4 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
-//         <input
-//           type="text"
-//           placeholder="🔍 Search by name or email..."
-//           className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full lg:flex-1"
-//           value={search}
-//           onChange={(e) => setSearch(e.target.value)}
-//         />
-        
-//         {/* Dropdown container wraps beautifully into double columns on mobile viewports */}
-//         <div className="grid grid-cols-2 gap-2 lg:flex lg:items-center lg:gap-3">
-//           <select
-//             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full"
-//             value={roleFilter}
-//             onChange={(e) => setRoleFilter(e.target.value)}
-//           >
-//             <option value="all">All Roles</option>
-//             <option value="recruiter">Recruiter</option>
-//             <option value="applicant">Applicant</option>
-//           </select>
-//           <select
-//             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full"
-//             value={statusFilter}
-//             onChange={(e) => setStatusFilter(e.target.value)}
-//           >
-//             <option value="all">All Status</option>
-//             <option value="active">Active</option>
-//             <option value="pending">Pending</option>
-//             <option value="suspended">Suspended</option>
-//           </select>
-//         </div>
-
-//         <span className="text-xs sm:text-sm text-gray-500 text-center lg:ml-auto">
-//           Showing {filteredUsers.length} of {users.length} users
-//         </span>
-//       </div>
-
-//       {/* Table Container Layer Isolate with Native Smooth Hardware Scrolling */}
-//       <div className="overflow-x-auto rounded-2xl bg-white shadow w-full">
-//         <table className="min-w-[900px] w-full text-sm">
-//           <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-//             <tr>
-//               <th className="px-6 py-4 text-left">Name</th>
-//               <th className="px-6 py-4 text-left">Email</th>
-//               <th className="px-6 py-4 text-left">Role</th>
-//               <th className="px-6 py-4 text-left">Status</th>
-//               <th className="px-6 py-4 text-left">Joined</th>
-//               <th className="px-6 py-4 text-left">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody className="divide-y divide-gray-100">
-//             {filteredUsers.length === 0 ? (
-//               <tr>
-//                 <td colSpan="6" className="text-center py-10 text-gray-400">
-//                   No users found
-//                 </td>
-//               </tr>
-//             ) : (
-//               filteredUsers.map((user) => (
-//                 <tr key={user._id} className="hover:bg-gray-50 transition">
-//                   <td className="px-6 py-4 font-medium text-gray-800">
-//                     <div className="flex items-center gap-2">
-//                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
-//                         {(user.name || "U").charAt(0)}
-//                       </div>
-//                       <span className="truncate max-w-[150px] sm:max-w-none">{user.name}</span>
-//                     </div>
-//                   </td>
-//                   <td className="px-6 py-4 text-gray-500 truncate max-w-[180px] sm:max-w-none">{user.email}</td>
-//                   <td className="px-6 py-4 whitespace-nowrap">
-//                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${roleBadge(user.role)}`}>
-//                       {user.role}
-//                     </span>
-//                   </td>
-//                   <td className="px-6 py-4 whitespace-nowrap">
-//                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(user.status)}`}>
-//                       {user.status || "active"}
-//                     </span>
-//                   </td>
-//                   <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
-//                     {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-IN") : "N/A"}
-//                   </td>
-//                   <td className="px-6 py-4 whitespace-nowrap">
-//                     <div className="flex items-center gap-2">
-//                       {(!user.status || user.status === "pending") && (
-//                         <button
-//                           onClick={() => handleStatusChange(user._id, "active")}
-//                           className="cursor-pointer bg-green-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-green-600 transition shadow-sm"
-//                         >
-//                           Approve
-//                         </button>
-//                       )}
-//                       {user.status === "active" && (
-//                         <button
-//                           onClick={() => handleStatusChange(user._id, "suspended")}
-//                           className="cursor-pointer bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-yellow-600 transition shadow-sm"
-//                         >
-//                           Suspend
-//                         </button>
-//                       )}
-//                       {user.status === "suspended" && (
-//                         <button
-//                           onClick={() => handleStatusChange(user._id, "active")}
-//                           className="cursor-pointer bg-blue-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-600 transition shadow-sm"
-//                         >
-//                           Reactivate
-//                         </button>
-//                       )}
-//                       <button
-//                         onClick={() => handleDelete(user._id)}
-//                         className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition shadow-sm"
-//                       >
-//                         Delete
-//                       </button>
-//                     </div>
-//                   </td>
-//                 </tr>
-//               ))
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// }
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+// Standard dynamic badges for design consistency
+const roleBadge = (role) => {
+  if (role === "recruiter") return "bg-purple-50 text-purple-700 font-medium capitalize border border-purple-100";
+  if (role === "applicant") return "bg-blue-50 text-blue-700 font-medium capitalize border border-blue-100";
+  return "bg-gray-50 text-gray-700 font-medium capitalize border border-gray-100";
+};
 
 export default function UserManagement() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Search aur Filters state
+  // Search aur Filters state tracking
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState(location.state?.filterRole || "");
   const [statusFilter, setStatusFilter] = useState("");
   
-  // Activity Modal state
+  // Activity Modal state references
   const [selectedUser, setSelectedUser] = useState(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (location.state?.filterRole) {
+      setRoleFilter(location.state.filterRole);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     fetchUsers();
@@ -276,28 +40,32 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
       const res = await fetch("/api/admin/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      if (res.status === 401 || res.status === 403) {
+        navigate("/"); 
+        return;
+      }
+
       const data = await res.json();
       if (res.ok) {
         setUsers(data);
       } else {
-        setError(data.message || "Failed to fetch users");
+        setError(data.message || "Failed to fetch master records");
       }
     } catch (err) {
-      setError("Network error. Internal system failure.");
+      setError("Network error. Internal systems tracking failure.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Status handle karne ke liye action engine (Block/Unblock)
+  // Status handler (Toggle Block/Unblock Account)
   const handleToggleStatus = async (userId, currentStatus) => {
     const nextStatus = currentStatus === "suspended" ? "approved" : "suspended";
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch(`/api/admin/users/${userId}/status`, {
         method: "PATCH",
         headers: {
@@ -308,16 +76,17 @@ export default function UserManagement() {
       });
       if (res.ok) {
         setUsers(users.map(u => u._id === userId ? { ...u, status: nextStatus } : u));
+      } else {
+        setError("Status modify action blocked by pipeline layers.");
       }
     } catch (err) {
-      console.error("Action handler crash", err);
+      console.error("Action handler crash logs:", err);
     }
   };
 
-  // Role upgrade/downgrade engine
+  // Privilege Assignment (Role upgrade/downgrade engine)
   const handleChangeRole = async (userId, newRole) => {
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch(`/api/admin/users/${userId}/role`, {
         method: "PATCH",
         headers: {
@@ -330,17 +99,68 @@ export default function UserManagement() {
         setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
       }
     } catch (err) {
-      console.error("Role change failure", err);
+      console.error("Role migration error log:", err);
     }
   };
 
-  // Activity stream fetch module
+  // Account Wipe Operation (Wipes records from active data arrays)
+  const handleDeleteUserRecord = async (userId) => {
+    if (!window.confirm("Are you absolutely sure you want to permanently delete this user account profile?")) return;
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setUsers(users.filter(u => u._id !== userId));
+      } else {
+        setError("Deletion protocol dropped by backend cluster rules.");
+      }
+    } catch (err) {
+      console.error("Data wipe failure log tracking:", err);
+    }
+  };
+
+  // Local Memory dynamic blob parsing engine for CSV exports
+  const handleExportToCSVRegistry = () => {
+    if (!filteredUsers || filteredUsers.length === 0) {
+      alert("No matching active dashboard rows to export.");
+      return;
+    }
+
+    const csvHeaders = ["Unique ID", "Full Name", "Email Address", "System Access Role", "Status Level"];
+    const csvRows = filteredUsers.map(u => [
+      u._id,
+      `"${u.name || 'N/A'}"`,
+      u.email,
+      u.role,
+      u.status || "approved"
+    ]);
+
+    const compiledCSVContent = [
+      csvHeaders.join(","),
+      ...csvRows.map(r => r.join(","))
+    ].join("\n");
+
+    const documentBlob = new Blob([compiledCSVContent], { type: "text/csv;charset=utf-8;" });
+    const localBlobURL = URL.createObjectURL(documentBlob);
+
+    const anchorTrigger = document.createElement("a");
+    anchorTrigger.setAttribute("href", localBlobURL);
+    anchorTrigger.setAttribute("download", `ATS_User_Matrix_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    anchorTrigger.style.visibility = "hidden";
+    
+    document.body.appendChild(anchorTrigger);
+    anchorTrigger.click();
+    document.body.removeChild(anchorTrigger);
+  };
+
   const handleViewActivity = (user) => {
     setSelectedUser(user);
     setShowActivityModal(true);
   };
 
-  // Client-side advanced search filtering logic
+  // Advanced client-side compute loops filters
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(search.toLowerCase()) || 
                           user.email?.toLowerCase().includes(search.toLowerCase());
@@ -351,46 +171,57 @@ export default function UserManagement() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header section */}
+      {/* Header section layout */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">User Matrix & Governance</h1>
           <p className="text-sm text-gray-500">Manage global accounts, system access levels, and logs.</p>
         </div>
+        {/* CSV Downloader Inject Button */}
+        <button
+          onClick={handleExportToCSVRegistry}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer outline-none"
+        >
+          📥 Export Filtered CSV List
+        </button>
       </div>
 
       {/* Advanced Filters Block */}
-      <div className="bg-white p-4 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-col md:flex-row gap-4 items-center">
         <input
           type="text"
           placeholder="Search by name or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+          className="w-full md:flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
         />
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-        >
-          <option value="">All Access Roles</option>
-          <option value="admin">Admin</option>
-          <option value="recruiter">Recruiter</option>
-          <option value="applicant">Applicant</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-        >
-          <option value="">All Statuses</option>
-          <option value="approved">Approved / Active</option>
-          <option value="suspended">Suspended / Blocked</option>
-          <option value="pending">Pending Review</option>
-        </select>
+        <div className="grid grid-cols-2 gap-2 w-full md:w-auto md:flex md:items-center md:gap-3">
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all bg-no-repeat"
+          >
+            <option value="">All Access Roles</option>
+            <option value="admin">Admin</option>
+            <option value="recruiter">Recruiter</option>
+            <option value="applicant">Applicant</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+          >
+            <option value="">All Statuses</option>
+            <option value="approved">Approved / Active</option>
+            <option value="suspended">Suspended / Blocked</option>
+            <option value="pending">Pending Review</option>
+          </select>
+        </div>
+        <span className="text-xs font-semibold text-gray-400 whitespace-nowrap md:ml-auto">
+          Showing {filteredUsers.length} of {users.length} Records
+        </span>
       </div>
 
-      {/* Error state */}
       {error && (
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">{error}</div>
       )}
@@ -420,45 +251,51 @@ export default function UserManagement() {
                 filteredUsers.map((user) => (
                   <tr key={user._id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="p-4">
-                      <div className="font-medium text-gray-900">{user.name}</div>
+                      <div className="font-semibold text-gray-900">{user.name}</div>
                       <div className="text-xs text-gray-400">{user.email}</div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <select
                         value={user.role}
                         onChange={(e) => handleChangeRole(user._id, e.target.value)}
-                        className="bg-gray-50 border border-gray-200 text-xs rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                        className={`bg-white border border-gray-200 text-xs rounded-lg px-2.5 py-1 focus:ring-2 focus:ring-blue-500 font-medium outline-none ${roleBadge(user.role)}`}
                       >
                         <option value="applicant">Applicant</option>
                         <option value="recruiter">Recruiter</option>
                         <option value="admin">Admin</option>
                       </select>
                     </td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                        user.status === "approved" ? "bg-green-50 text-green-700" :
+                    <td className="p-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        user.status === "approved" || !user.status ? "bg-green-50 text-green-700" :
                         user.status === "suspended" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${user.status === "approved" ? "bg-green-600" : user.status === "suspended" ? "bg-red-600" : "bg-amber-600"}`} />
-                        {user.status}
+                        <span className={`w-1.5 h-1.5 rounded-full ${user.status === "approved" || !user.status ? "bg-green-600" : user.status === "suspended" ? "bg-red-600" : "bg-amber-600"}`} />
+                        {user.status || "approved"}
                       </span>
                     </td>
-                    <td className="p-4 text-right space-x-2">
+                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
                       <button
                         onClick={() => handleViewActivity(user)}
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 px-3 py-1.5 rounded-lg transition-all"
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
                       >
                         Activity Log
                       </button>
                       <button
-                        onClick={() => handleToggleStatus(user._id, user.status)}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
+                        onClick={() => handleToggleStatus(user._id, user.status || "approved")}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                           user.status === "suspended" 
                             ? "text-green-600 bg-green-50 hover:bg-green-100" 
-                            : "text-red-600 bg-red-50 hover:bg-red-100"
+                            : "text-amber-700 bg-amber-50 hover:bg-amber-100"
                         }`}
                       >
-                        {user.status === "suspended" ? "Unblock Account" : "Block User"}
+                        {user.status === "suspended" ? "Unblock User" : "Suspend Access"}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUserRecord(user._id)}
+                        className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -480,13 +317,12 @@ export default function UserManagement() {
               </div>
               <button 
                 onClick={() => setShowActivityModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-sm font-medium p-1"
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
             <div className="p-6 space-y-4 max-h-[350px] overflow-y-auto">
-              {/* Fake/Mocked dynamic activity logs to keep tracking clean without separate collection */}
               <div className="flex gap-3 text-sm">
                 <div className="text-blue-500 font-semibold mt-0.5">●</div>
                 <div>
@@ -505,7 +341,7 @@ export default function UserManagement() {
             <div className="p-4 bg-gray-50 border-t border-gray-100 text-right">
               <button
                 onClick={() => setShowActivityModal(false)}
-                className="text-xs font-medium text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50"
+                className="text-xs font-semibold text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 cursor-pointer"
               >
                 Close Audit View
               </button>

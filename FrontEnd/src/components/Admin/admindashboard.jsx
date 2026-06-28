@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-// StatCard clickable hai aur responsive layout transitions hold karta hai
+// Simple and responsive StatCard component with custom actions
 const StatCard = ({ title, value, icon, color, onClick }) => (
   <div 
     onClick={onClick}
@@ -21,6 +21,8 @@ export default function AdminDashboard() {
     totalApplications: 0,
     totalRecruiters: 0,
     totalApplicants: 0,
+    aiUsageCount: 0,
+    failedParsingCount: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -42,7 +44,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         setStats(data);
       } catch (err) {
-        setError("Stats load nahi ho sake");
+        setError("Dashboard statistics fetch protocol crashed.");
       } finally {
         setLoading(false);
       }
@@ -56,7 +58,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400 text-base sm:text-lg font-medium">Loading Stats...</p>
+        <p className="text-gray-400 text-base sm:text-lg font-medium animate-pulse">Loading System Stats...</p>
       </div>
     );
   }
@@ -64,79 +66,87 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 sm:space-y-8">
 
-      {/* Header */}
+      {/* Header Description Section */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Dashboard</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Dashboard Overview</h2>
         <p className="text-gray-500 text-xs sm:text-sm mt-1">
           Welcome back, {user.name || "Admin"} 👋
         </p>
       </div>
 
-      {/* Error View Container */}
+      {/* Error Alert Box */}
       {error && (
         <div className="bg-red-100 text-red-600 px-4 py-3 rounded-xl text-xs sm:text-sm">
           {error}
         </div>
       )}
 
-      {/* Responsive Grid System: Mobile (1 column), Tablet (2 columns), Desktop (4 columns) */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {/* Total Jobs Card */}
+      {/* 3x2 Grid layout showing standard metrics alongside brand-new AI insights */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard 
           title="Total Jobs" 
           value={stats.totalJobs} 
           icon="💼" 
-          color="bg-blue-100" 
+          color="bg-blue-100 text-blue-700" 
           onClick={() => navigate("/admin/jobs")}
         />
-        
-        {/* Total Applications Card */}
         <StatCard 
           title="Total Applications" 
           value={stats.totalApplications} 
           icon="📋" 
-          color="bg-green-100" 
+          color="bg-green-100 text-green-700" 
           onClick={() => navigate("/admin/applications")}
         />
-        
-        {/* Total Recruiters Card */}
         <StatCard 
-          title="Total Recruiters" 
+          title="Registered Recruiters" 
           value={stats.totalRecruiters} 
           icon="🧑‍💼" 
-          color="bg-purple-100" 
+          color="bg-purple-100 text-purple-700" 
           onClick={() => navigate("/admin/users", { state: { filterRole: "recruiter" } })}
         />
-        
-        {/* Total Applicants Card */}
         <StatCard 
-          title="Total Applicants" 
+          title="Applicant Pool" 
           value={stats.totalApplicants} 
           icon="👥" 
-          color="bg-yellow-100" 
+          color="bg-yellow-100 text-yellow-700" 
           onClick={() => navigate("/admin/users", { state: { filterRole: "applicant" } })}
+        />
+        {/* NEW AI CARDS */}
+        <StatCard 
+          title="AI Parsing Cycles" 
+          value={stats.aiUsageCount || 0} 
+          icon="🤖" 
+          color="bg-indigo-100 text-indigo-700" 
+          onClick={() => navigate("/admin/applications")}
+        />
+        <StatCard 
+          title="OCR / Parsing Failures" 
+          value={stats.failedParsingCount || 0} 
+          icon="⚠️" 
+          color="bg-red-100 text-red-700" 
+          onClick={() => navigate("/admin/applications")}
         />
       </div>
 
-      {/* Quick Actions Panel with wrap handling for small width viewports */}
+      {/* Action Center Block */}
       <div className="bg-white rounded-2xl shadow p-5 sm:p-6">
         <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
         <div className="flex flex-col xs:flex-row flex-wrap gap-3">
           <button
             onClick={() => navigate("/admin/users")}
-            className="cursor-pointer w-full xs:w-auto text-center bg-blue-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm hover:bg-blue-700 transition"
+            className="cursor-pointer w-full xs:w-auto text-center bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm hover:bg-blue-700 transition font-medium"
           >
             👥 Manage Users
           </button>
           <button
             onClick={() => navigate("/admin/applications")}
-            className="cursor-pointer w-full xs:w-auto text-center bg-green-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm hover:bg-green-700 transition"
+            className="cursor-pointer w-full xs:w-auto text-center bg-green-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm hover:bg-green-700 transition font-medium"
           >
             📋 View Applications
           </button>
           <button
             onClick={() => navigate("/admin/jobs")}
-            className="cursor-pointer w-full xs:w-auto text-center bg-purple-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm hover:bg-purple-700 transition"
+            className="cursor-pointer w-full xs:w-auto text-center bg-purple-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm hover:bg-purple-700 transition font-medium"
           >
             💼 View Jobs
           </button>
