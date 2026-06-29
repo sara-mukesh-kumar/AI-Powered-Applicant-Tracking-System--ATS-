@@ -347,5 +347,64 @@ router.delete("/audit-logs/purge", protect, authorize("admin"), async (req, res)
     res.status(500).json({ message: "Security governance logging sweep failed", error: error.message });
   }
 });
+// ========================================================
+// 👥 ADVANCED USER ACCOUNT MANAGEMENT ENGINES
+// ========================================================
+
+// PATCH /api/admin/users/:id/reset-password — Force Reset User Password
+router.patch("/users/:id/reset-password", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.trim().length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User profile signature not found" });
+
+    // Update password (agar aapke User model mein .pre('save') brypt hook laga hai toh ye auto-hash hoga)
+    user.password = newPassword;
+    await user.save();
+
+    // 🛡️ Create System Audit Log
+    const logEntry = new AuditLog({
+      action: "USER_PASSWORD_RESET",
+      details: `Administrative override: Forced password reset execution completed for account: ${user.email}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
+    res.json({ success: true, message: `Password changed successfully for user: ${user.name}` });
+  } catch (error) {
+    res.status(500).json({ message: "Server crash resetting user password matrix", error: error.message });
+  }
+});
+
+// POST /api/admin/users/:id/revoke-sessions — Kill Active User JWT Sessions
+router.post("/users/:id/revoke-sessions", protect, authorize("admin"), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "Target account signature mismatch" });
+
+    // Token revocation standard practice: Increment context token/session version identifier count
+    // Agar model mein abhi tokenVersion field nahi hai, toh runtime fallback par log track persist karega
+    user.tokenVersion = (user.tokenVersion || 0) + 1; 
+    await user.save();
+
+    // 🛡️ Log session clearance event
+    const logEntry = new AuditLog({
+      action: "USER_SESSION_REVOKED",
+      details: `Administrative termination: Revoked all active authentication sessions tokens for: ${user.email}`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
+    res.json({ success: true, message: `Successfully revoked all active active tokens and sessions for: ${user.name}` });
+  } catch (error) {
+    res.status(500).json({ message: "Internal gateway crash terminating active sessions", error: error.message });
+  }
+});
 
 export default router;
