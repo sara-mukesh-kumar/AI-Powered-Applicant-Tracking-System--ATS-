@@ -5,6 +5,8 @@ import Application from "../models/application.js";
 import Broadcast from "../models/Broadcast.js"; 
 import AuditLog from "../models/AuditLog.js"; 
 import { protect, authorize } from "../middleware/authMiddleware.js";
+import AiConfig from "../models/AiConfig.js"; 
+
 
 const router = express.Router();
 
@@ -404,6 +406,64 @@ router.post("/users/:id/revoke-sessions", protect, authorize("admin"), async (re
     res.json({ success: true, message: `Successfully revoked all active active tokens and sessions for: ${user.name}` });
   } catch (error) {
     res.status(500).json({ message: "Internal gateway crash terminating active sessions", error: error.message });
+  }
+});
+
+
+// ========================================================
+// 🤖 AI SCORING STRATEGY CONTROL ENDPOINTS
+// ========================================================
+
+// GET /api/admin/ai-config/:profileType — Fetch weight ratios
+router.get("/ai-config/:profileType", protect, authorize("admin"), async (req, res) => {
+  try {
+    let config = await AiConfig.findOne({ profileType: req.params.profileType });
+    
+    // Default strategy backup layer if empty database record instances found
+    if (!config) {
+      config = {
+        profileType: req.params.profileType,
+        weights: { keywordMatch: 30, skillsTaxonomy: 35, experienceDuration: 20, educationFormatting: 15 },
+        minimumPassingScore: 60
+      };
+    }
+    res.json({ success: true, config });
+  } catch (error) {
+    res.status(500).json({ message: "AI rules parsing ledger mapping crashed", error: error.message });
+  }
+});
+
+// POST /api/admin/ai-config/save — Update or Create global weighting criteria 
+router.post("/ai-config/save", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { profileType, weights, minimumPassingScore } = req.body;
+    
+    // Mathematical boundary constraint validation check total ratios sum = 100%
+    const totalWeightsSum = Number(weights.keywordMatch) + Number(weights.skillsTaxonomy) + 
+                            Number(weights.experienceDuration) + Number(weights.educationFormatting);
+                            
+    if (totalWeightsSum !== 100) {
+      return res.status(400).json({ message: `Total strategy constraint matrix weights sum must equal strictly 100%. Current sum: ${totalWeightsSum}%` });
+    }
+
+    const updatedConfig = await AiConfig.findOneAndUpdate(
+      { profileType },
+      { weights, minimumPassingScore },
+      { new: true, upsert: true }
+    );
+
+    // 🛡️ Log execution audit records
+    const logEntry = new AuditLog({
+      action: "AI_SCORING_TUNED",
+      details: `Admin customized AI calculation constraints profiles weights for [${profileType.toUpperCase()}] matrix configuration rules.`,
+      performedBy: req.user._id,
+      ipAddress: req.ip
+    });
+    await logEntry.save();
+
+    res.json({ success: true, message: "AI strategic optimization weights saved into cluster core schemas.", config: updatedConfig });
+  } catch (error) {
+    res.status(500).json({ message: "Strategic config storage pipeline broke", error: error.message });
   }
 });
 

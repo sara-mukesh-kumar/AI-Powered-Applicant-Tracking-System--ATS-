@@ -6,9 +6,11 @@ const menuItems = [
   { label: "Jobs Overview", path: "/admin/jobs", icon: "💼" },
   { label: "Applications", path: "/admin/applications", icon: "📋" },
   { label: "System Broadcast", path: "/admin/broadcast", icon: "📢" },
-  { label: "Communication", path: "/admin/communication", icon: "✉️" }, // 👈 NEWLY ADDED EMAIL HUB TAB
+  { label: "Communication", path: "/admin/communication", icon: "✉️" }, 
   { label: "System Audit Logs", path: "/admin/audit-logs", icon: "🛡️" },
-  { label: "Reporting Dashboard", path: "/admin/analytics-report", icon: "📊" }, 
+  { label: "Reporting Dashboard", path: "/admin/analytics-report", icon: "📉" },
+  { label: "AI Scoring Rules", path: "/admin/ai-control", icon: "🤖" },
+{ label: "Resume Controls", path: "/admin/resume-hub", icon: "🖨️" } ,
 ];
 
 export default function AdminSidebar({ closeMobileMenu }) {
